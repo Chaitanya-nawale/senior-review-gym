@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AnimatePresence,
@@ -26,6 +26,7 @@ import {
   Target,
   Terminal,
   TrendingUp,
+  RotateCcw,
   Twitter,
   X,
   Zap,
@@ -120,13 +121,9 @@ function Nav() {
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <a href="#top" className="group flex items-center gap-2">
-          <div className="relative h-6 w-6">
-            <div className="absolute inset-0 rounded-md bg-gradient-to-br from-white to-white/40" />
-            <div className="absolute inset-[3px] rounded-[3px] bg-black" />
-            <div className="absolute inset-[6px] rounded-[1px] bg-gradient-to-br from-white to-white/60" />
-          </div>
+          <img src="/favicon.ico" alt="MeisterUp Logo" className="h-6 w-6 object-contain" />
           <span className="text-[15px] font-semibold tracking-tight text-white">
-            Axiom
+            MeisterUp
           </span>
           <span className="ml-1 rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white/50">
             Beta
@@ -149,12 +146,12 @@ function Nav() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <a
-            href="#signin"
+          <Link
+            to="/signin"
             className="hidden text-[13px] font-medium text-white/70 hover:text-white sm:block"
           >
             Sign in
-          </a>
+          </Link>
           <a
             href="#demo"
             className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[13px] font-semibold text-black transition-all hover:bg-white/90"
@@ -201,7 +198,7 @@ function Hero() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-white/60">
-            Axiom models your existing knowledge, finds the exact gaps that
+            MeisterUp models your existing knowledge, finds the exact gaps that
             matter, and generates a personalized curriculum for any technical
             skill — from Rust to system design to prompt engineering.
           </p>
@@ -253,7 +250,7 @@ function HeroCanvas() {
             <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
           </div>
           <div className="mx-auto flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] text-white/50">
-            <Lock className="h-3 w-3" /> axiom.dev / learn / python
+            <Lock className="h-3 w-3" /> meisterup.com / learn / python
           </div>
           <div className="w-12" />
         </div>
@@ -637,7 +634,7 @@ function AssessmentDemo() {
             <span className="text-white/40">A curriculum for one.</span>
           </h2>
           <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-white/60">
-            Instead of a 40-question exam, Axiom asks a handful of well-chosen
+            Instead of a 40-question exam, MeisterUp asks a handful of well-chosen
             questions. Each answer updates a probability distribution over
             every concept in the graph — collapsing weeks of onboarding into
             under a minute.
@@ -746,7 +743,7 @@ function ActivityTypes() {
             Ten ways to prove you know it.
           </h2>
           <p className="mt-4 text-[16px] text-white/60">
-            Different concepts require different interactions. Axiom picks the
+            Different concepts require different interactions. MeisterUp picks the
             right one — and grades reasoning, not just answers.
           </p>
         </div>
@@ -833,6 +830,8 @@ function SwipeDemo() {
   const [feedback, setFeedback] = useState<null | { correct: boolean; card: typeof SWIPE_CARDS[number] }>(null);
   const [streak, setStreak] = useState(0);
   const [xp, setXp] = useState(120);
+  const [prevStreak, setPrevStreak] = useState(0);
+  const [prevXp, setPrevXp] = useState(120);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-14, 14]);
@@ -845,6 +844,8 @@ function SwipeDemo() {
   function resolve(dir: "left" | "right") {
     const userSaysBad = dir === "left";
     const correct = userSaysBad === card.bad;
+    setPrevStreak(streak);
+    setPrevXp(xp);
     setFeedback({ correct, card });
     if (correct) {
       setStreak((s) => s + 1);
@@ -856,6 +857,13 @@ function SwipeDemo() {
   function nextCard() {
     setFeedback(null);
     setI((n) => n + 1);
+    x.set(0);
+  }
+  function undo() {
+    if (!feedback) return;
+    setStreak(prevStreak);
+    setXp(prevXp);
+    setFeedback(null);
     x.set(0);
   }
 
@@ -873,7 +881,7 @@ function SwipeDemo() {
           <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-white/60">
             A live sample of one activity type — swipe-based code review, drawn
             from anonymized production PRs. Reasoning matters more than the
-            swipe: after each card, Axiom asks <em>why</em>.
+            swipe: after each card, MeisterUp asks <em>why</em>.
           </p>
 
           <div className="mt-8 grid max-w-md grid-cols-3 gap-3">
@@ -947,12 +955,17 @@ function SwipeDemo() {
                   {feedback.card.why}
                 </p>
                 <div className="mt-auto flex items-center justify-between border-t border-white/[0.06] pt-4">
-                  <div className="text-[11px] text-white/40">
-                    Mastery on <span className="text-white/70">{feedback.card.concept}</span> ↑
-                  </div>
+                  <button
+                    onClick={undo}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                    title="Undo last swipe"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Undo swipe
+                  </button>
                   <button
                     onClick={nextCard}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-[12px] font-semibold text-black hover:bg-white/90"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-[12px] font-semibold text-black hover:bg-white/90 cursor-pointer"
                   >
                     Next
                     <ArrowRight className="h-3.5 w-3.5" />
@@ -1195,7 +1208,7 @@ function DashboardShowcase() {
             A map of what you know.
           </h2>
           <p className="mt-4 text-[16px] text-white/60">
-            Forget "10 lessons completed." Axiom shows you mastery, retention,
+            Forget "10 lessons completed." MeisterUp shows you mastery, retention,
             velocity, and where to invest next.
           </p>
         </div>
@@ -1402,7 +1415,7 @@ function Heatmap() {
 
 const QUOTES = [
   {
-    q: "I came in with 8 years of backend. Axiom skipped the boring parts and had me writing idiomatic Rust in a week. No course has ever done that.",
+    q: "I came in with 8 years of backend. MeisterUp skipped the boring parts and had me writing idiomatic Rust in a week. No course has ever done that.",
     a: "Marielle O.",
     r: "Staff Engineer, Fintech",
   },
@@ -1586,7 +1599,7 @@ function Pricing() {
 const FAQS = [
   {
     q: "How is this different from an online course?",
-    a: "Courses are linear and identical for every learner. Axiom generates a unique curriculum for every user, based on demonstrated knowledge — you skip what you know and drill what you don't.",
+    a: "Courses are linear and identical for every learner. MeisterUp generates a unique curriculum for every user, based on demonstrated knowledge — you skip what you know and drill what you don't.",
   },
   {
     q: "How does the platform know what I already know?",
@@ -1598,11 +1611,11 @@ const FAQS = [
   },
   {
     q: "Is it just multiple choice?",
-    a: "No. Axiom uses ten interaction types — simulations, error-detection swipes, ordering, scenario decisions, explain-back — and grades reasoning, not just correctness.",
+    a: "No. MeisterUp uses ten interaction types — simulations, error-detection swipes, ordering, scenario decisions, explain-back — and grades reasoning, not just correctness.",
   },
   {
     q: "Can teams use this?",
-    a: "Yes. Team plans include shared skill maps, manager review sessions, and SSO. Teams use Axiom for onboarding and continuous levelling.",
+    a: "Yes. Team plans include shared skill maps, manager review sessions, and SSO. Teams use MeisterUp for onboarding and continuous levelling.",
   },
   {
     q: "Do you store my learning data?",
@@ -1711,12 +1724,8 @@ function Footer() {
         <div className="grid gap-10 md:grid-cols-4">
           <div>
             <div className="flex items-center gap-2">
-              <div className="relative h-6 w-6">
-                <div className="absolute inset-0 rounded-md bg-gradient-to-br from-white to-white/40" />
-                <div className="absolute inset-[3px] rounded-[3px] bg-black" />
-                <div className="absolute inset-[6px] rounded-[1px] bg-gradient-to-br from-white to-white/60" />
-              </div>
-              <span className="text-[15px] font-semibold text-white">Axiom</span>
+              <img src="/favicon.ico" alt="MeisterUp Logo" className="h-6 w-6 object-contain" />
+              <span className="text-[15px] font-semibold text-white">MeisterUp</span>
             </div>
             <p className="mt-4 max-w-xs text-[12px] leading-relaxed text-white/50">
               The adaptive learning platform for engineers. Built for the way
@@ -1765,7 +1774,7 @@ function Footer() {
           ))}
         </div>
         <div className="mt-12 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-6 text-[11px] text-white/40">
-          <div>© {new Date().getFullYear()} Axiom Labs, Inc.</div>
+          <div>© {new Date().getFullYear()} MeisterUp, Inc.</div>
           <div className="flex items-center gap-1.5">
             <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400" />
             All systems operational
