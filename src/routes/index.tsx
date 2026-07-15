@@ -8,380 +8,506 @@ import {
 } from "framer-motion";
 import {
   ArrowRight,
+  ArrowUpRight,
+  Brain,
   Check,
   ChevronDown,
+  Command,
+  Cpu,
   Flame,
+  GitBranch,
   Github,
+  Layers,
+  LineChart,
+  Lock,
+  Network,
   Play,
-  Settings,
-  Shield,
   Sparkles,
   Target,
   Terminal,
+  TrendingUp,
+  Twitter,
   X,
   Zap,
-  Cpu,
-  Database,
-  GitBranch,
-  Lock,
-  Layers,
-  Activity,
-  Twitter,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Axiom — Adaptive Learning Platform for Engineers" },
+      {
+        name: "description",
+        content:
+          "Axiom is an AI-native adaptive learning platform. It models what you already know, finds your gaps, and teaches the right concept next — for any technical skill.",
+      },
+      { property: "og:title", content: "Axiom — Adaptive Learning for Engineers" },
+      {
+        property: "og:description",
+        content:
+          "Skip what you know. Master what you don't. A personalized curriculum, generated for every learner.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: LandingPage,
 });
 
-/* -------------------------------------------------------------------------- */
-/*  MOCK DATA                                                                 */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────────── */
+/*  PRIMITIVES                                                    */
+/* ────────────────────────────────────────────────────────────── */
 
-const MOCK_DATA = [
-  {
-    id: "challenge_001",
-    concept_id: "js_event_loop",
-    concept_title: "Event Loop Blockers",
-    type: "spot_hallucination",
-    code_snippet: `const crypto = require('crypto');
+function cn(...c: (string | false | undefined | null)[]) {
+  return c.filter(Boolean).join(" ");
+}
 
-app.post('/hash', (req, res) => {
-  const file = req.body.file;
-  // CPU bound crypto runs synchronously
-  const hash = crypto.pbkdf2Sync(file, 'salt', 100000, 64, 'sha512');
-  res.send(hash);
-});`,
-    language: "javascript",
-    difficulty: "intermediate",
-    bug_line: 6,
-    mcq_question: "Why will this PR degrade performance under high traffic?",
-    options: [
-      { id: "A", text: "It blocks the single-threaded V8 event loop entirely." },
-      { id: "B", text: "The file buffer is not properly garbage collected." },
-      { id: "C", text: "pbkdf2Sync is deprecated in newer Node versions." },
-      { id: "D", text: "The route handler lacks asynchronous error boundaries." },
-    ],
-    correct_option_id: "A",
-    explanation:
-      "In Node.js, running CPU-intensive operations synchronously blocks the entire event loop, freezing the server for all other concurrent users.",
-  },
-  {
-    id: "challenge_002",
-    concept_id: "react_stale_closure",
-    concept_title: "Stale Closures in Hooks",
-    type: "spot_hallucination",
-    code_snippet: `function usePolling(url) {
-  const [data, setData] = useState(null);
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      fetch(url).then(r => r.json()).then(setData);
-      setCount(count + 1);
-    }, 1000);
-    return () => clearInterval(id);
-  }, [url]);
-
-  return { data, count };
-}`,
-    language: "javascript",
-    difficulty: "intermediate",
-    bug_line: 8,
-    mcq_question: "What is the subtle defect a senior reviewer should catch?",
-    options: [
-      { id: "A", text: "fetch should be wrapped in AbortController for cleanup." },
-      { id: "B", text: "setCount closes over a stale `count`, so it never advances past 1." },
-      { id: "C", text: "setInterval leaks memory across re-renders." },
-      { id: "D", text: "The dependency array should include `data`." },
-    ],
-    correct_option_id: "B",
-    explanation:
-      "The effect only re-runs when `url` changes, so the interval callback captures the initial `count`. Use the functional updater form: setCount(c => c + 1).",
-  },
-  {
-    id: "challenge_003",
-    concept_id: "sql_n_plus_one",
-    concept_title: "N+1 Query Antipattern",
-    type: "spot_hallucination",
-    code_snippet: `async function getFeed(userId) {
-  const posts = await db.post.findMany({ where: { userId } });
-  for (const post of posts) {
-    post.author = await db.user.findUnique({ where: { id: post.authorId } });
-    post.likes = await db.like.count({ where: { postId: post.id } });
-  }
-  return posts;
-}`,
-    language: "javascript",
-    difficulty: "advanced",
-    bug_line: 4,
-    mcq_question: "Why will this endpoint collapse at moderate scale?",
-    options: [
-      { id: "A", text: "findMany doesn't use an index on userId." },
-      { id: "B", text: "The transaction isolation level is too strict." },
-      { id: "C", text: "It issues N+1 queries — one per post — instead of batching." },
-      { id: "D", text: "Prisma requires `await Promise.all` for parallelism." },
-    ],
-    correct_option_id: "C",
-    explanation:
-      "Each post triggers two additional queries. Use `include` or a DataLoader to batch author and like lookups into constant-query joins.",
-  },
-];
-
-/* -------------------------------------------------------------------------- */
-/*  LANDING PAGE                                                              */
-/* -------------------------------------------------------------------------- */
-
-function LandingPage() {
-  const appRef = useRef<HTMLDivElement>(null);
-  const scrollToApp = () =>
-    appRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
+function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-black text-gray-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-100">
-      <Nav onDemo={scrollToApp} />
-      <Hero onDemo={scrollToApp} />
-      <TrustedBy />
-      <HowItWorks />
-      <WhyItWorks />
-      <div ref={appRef}>
-        <InteractiveDemo />
-      </div>
-      <FeaturesGrid />
-      <Testimonials />
-      <Pricing />
-      <FAQ />
-      <Footer />
-    </main>
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-white/60 backdrop-blur">
+      {children}
+    </div>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  NAV                                                                       */
-/* -------------------------------------------------------------------------- */
-
-function Nav({ onDemo }: { onDemo: () => void }) {
+function GridBg() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/5 bg-black/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-        <a href="#" className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-          <div className="grid h-6 w-6 place-items-center rounded-md border border-white/10 bg-white/[0.03]">
-            <Terminal className="h-3.5 w-3.5 text-emerald-400" strokeWidth={2.25} />
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 opacity-[0.35]"
+      style={{
+        backgroundImage:
+          "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)",
+        backgroundSize: "56px 56px",
+        maskImage:
+          "radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 100%)",
+      }}
+    />
+  );
+}
+
+function GlowOrb({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute rounded-full blur-[120px] opacity-40",
+        className,
+      )}
+    />
+  );
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*  NAV                                                           */
+/* ────────────────────────────────────────────────────────────── */
+
+function Nav() {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 8);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+  return (
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
+        scrolled
+          ? "backdrop-blur-xl bg-black/60 border-b border-white/[0.06]"
+          : "bg-transparent",
+      )}
+    >
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+        <a href="#top" className="group flex items-center gap-2">
+          <div className="relative h-6 w-6">
+            <div className="absolute inset-0 rounded-md bg-gradient-to-br from-white to-white/40" />
+            <div className="absolute inset-[3px] rounded-[3px] bg-black" />
+            <div className="absolute inset-[6px] rounded-[1px] bg-gradient-to-br from-white to-white/60" />
           </div>
-          <span>Zero-Syntax</span>
-          <span className="ml-1 rounded border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono text-[10px] text-gray-400">
-            v1.0
+          <span className="text-[15px] font-semibold tracking-tight text-white">
+            Axiom
+          </span>
+          <span className="ml-1 rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white/50">
+            Beta
           </span>
         </a>
-        <nav className="hidden items-center gap-8 text-sm text-gray-400 md:flex">
-          <a href="#features" className="transition-colors hover:text-white">Features</a>
-          <a href="#pricing" className="transition-colors hover:text-white">Pricing</a>
-          <a href="#faq" className="transition-colors hover:text-white">FAQ</a>
-          <a href="#" className="transition-colors hover:text-white">Docs</a>
+        <nav className="hidden items-center gap-8 md:flex">
+          {[
+            ["Platform", "#platform"],
+            ["Curriculum", "#curriculum"],
+            ["Skills", "#skills"],
+            ["Pricing", "#pricing"],
+          ].map(([label, href]) => (
+            <a
+              key={label}
+              href={href}
+              className="text-[13px] font-medium text-white/60 transition-colors hover:text-white"
+            >
+              {label}
+            </a>
+          ))}
         </nav>
         <div className="flex items-center gap-2">
-          <button
-            onClick={onDemo}
-            className="hidden rounded-md border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-gray-300 transition-all hover:border-white/20 hover:bg-white/[0.06] hover:text-white sm:block"
+          <a
+            href="#signin"
+            className="hidden text-[13px] font-medium text-white/70 hover:text-white sm:block"
           >
             Sign in
-          </button>
-          <button
-            onClick={onDemo}
-            className="group inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-black transition-all hover:bg-gray-200"
+          </a>
+          <a
+            href="#demo"
+            className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[13px] font-semibold text-black transition-all hover:bg-white/90"
           >
-            Start training
+            Start free
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-          </button>
+          </a>
         </div>
       </div>
     </header>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  HERO                                                                      */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────────── */
+/*  HERO                                                          */
+/* ────────────────────────────────────────────────────────────── */
 
-function Hero({ onDemo }: { onDemo: () => void }) {
+function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-white/5">
-      {/* subtle grid */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.35]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
-          maskImage:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 70%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 rounded-full"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(16,185,129,0.10), transparent 70%)",
-        }}
-      />
+    <section id="top" className="relative overflow-hidden pt-32 pb-24">
+      <GridBg />
+      <GlowOrb className="left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 bg-indigo-500" />
+      <GlowOrb className="right-0 top-40 h-[380px] w-[380px] bg-fuchsia-500/40" />
+      <GlowOrb className="left-0 top-60 h-[380px] w-[380px] bg-cyan-500/40" />
 
-      <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 pb-24 pt-20 lg:grid-cols-[1.05fr_1fr] lg:pb-32 lg:pt-28">
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-gray-300"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
-            <span className="font-mono">v1.0 · now in public beta</span>
-          </motion.div>
+      <div className="relative mx-auto max-w-7xl px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="mx-auto max-w-3xl text-center"
+        >
+          <Eyebrow>
+            <Sparkles className="h-3 w-3" />
+            <span>Adaptive engine · v1.4</span>
+          </Eyebrow>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05 }}
-            className="mt-6 text-5xl font-semibold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-[68px]"
-          >
-            Learn to read code<br />
-            <span className="text-gray-500">like a</span>{" "}
-            <span className="text-white">senior engineer</span>
-            <span className="text-emerald-400">.</span>
-          </motion.h1>
+          <h1 className="mt-6 font-sans text-5xl font-semibold leading-[1.02] tracking-[-0.035em] text-white sm:text-6xl md:text-7xl">
+            The learning platform that
+            <br />
+            <span className="bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+              knows what you don't.
+            </span>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="mt-6 max-w-xl text-lg leading-relaxed text-gray-400"
-          >
-            Zero-Syntax trains your engineering judgment by putting you inside
-            real production pull requests. Swipe to approve. Swipe to reject.
-            No syntax. No typing. Just the calls that separate mid from staff.
-          </motion.p>
+          <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-white/60">
+            Axiom models your existing knowledge, finds the exact gaps that
+            matter, and generates a personalized curriculum for any technical
+            skill — from Rust to system design to prompt engineering.
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.25 }}
-            className="mt-8 flex flex-wrap items-center gap-3"
-          >
-            <button
-              onClick={onDemo}
-              className="group inline-flex items-center gap-2 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-black transition-all hover:bg-gray-200"
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="#demo"
+              className="group inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[14px] font-semibold text-black transition hover:bg-white/90"
             >
-              Start training
+              Take the 60-second assessment
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </button>
-            <button
-              onClick={onDemo}
-              className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-gray-200 transition-all hover:border-white/20 hover:bg-white/[0.06]"
+            </a>
+            <a
+              href="#platform"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-5 py-2.5 text-[14px] font-medium text-white/90 backdrop-blur transition hover:bg-white/[0.06]"
             >
               <Play className="h-3.5 w-3.5" />
-              View demo
-            </button>
-          </motion.div>
-
-          <div className="mt-10 flex items-center gap-6 text-xs text-gray-500">
-            <div className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
-              No credit card
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
-              1,200+ curated PRs
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
-              Ships weekly
-            </div>
+              See how it thinks
+            </a>
           </div>
-        </div>
 
-        {/* mockup */}
-        <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="relative mx-auto w-full max-w-md"
-        >
-          <HeroMockup />
+          <p className="mt-6 text-[12px] text-white/40">
+            Free tier · No card required · SOC 2 in progress
+          </p>
         </motion.div>
+
+        <HeroCanvas />
       </div>
     </section>
   );
 }
 
-function HeroMockup() {
+/* Hero canvas — an animated knowledge graph + adaptive path */
+
+function HeroCanvas() {
   return (
-    <div className="relative">
-      {/* glow */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 rounded-3xl"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(16,185,129,0.18), transparent 70%)",
-          filter: "blur(30px)",
-        }}
-      />
-      <div className="rotate-[-1.5deg] rounded-2xl border border-white/10 bg-[#0a0a0a] p-3 shadow-2xl">
-        <TerminalCard challenge={MOCK_DATA[0]} compact />
-        <div className="mt-3 flex items-center justify-between px-1 text-[11px] text-gray-500">
-          <span className="font-mono">swipe · approve or reject</span>
-          <span className="flex items-center gap-1 font-mono text-emerald-400">
-            <Sparkles className="h-3 w-3" /> +25 XP
-          </span>
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      className="relative mx-auto mt-16 max-w-6xl"
+    >
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] shadow-[0_60px_120px_-30px_rgba(0,0,0,0.9)]">
+        {/* window chrome */}
+        <div className="flex items-center gap-2 border-b border-white/[0.06] bg-black/40 px-4 py-2.5">
+          <div className="flex gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
+            <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
+            <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
+          </div>
+          <div className="mx-auto flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[11px] text-white/50">
+            <Lock className="h-3 w-3" /> axiom.dev / learn / python
+          </div>
+          <div className="w-12" />
+        </div>
+
+        <div className="grid grid-cols-12 gap-0">
+          {/* Left rail — learner state */}
+          <div className="col-span-3 border-r border-white/[0.06] p-5">
+            <div className="text-[10px] font-medium uppercase tracking-widest text-white/40">
+              Learner model
+            </div>
+            <div className="mt-3 space-y-3">
+              {[
+                { k: "Transferred from Java", v: 78, color: "bg-emerald-400" },
+                { k: "Python idioms", v: 24, color: "bg-amber-400" },
+                { k: "Async runtime", v: 41, color: "bg-cyan-400" },
+                { k: "Type system", v: 62, color: "bg-indigo-400" },
+              ].map((s, i) => (
+                <div key={s.k}>
+                  <div className="flex items-baseline justify-between text-[11px]">
+                    <span className="text-white/70">{s.k}</span>
+                    <span className="font-mono tabular-nums text-white/50">
+                      {s.v}%
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/5">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${s.v}%` }}
+                      transition={{ delay: 0.6 + i * 0.1, duration: 0.8 }}
+                      className={cn("h-full rounded-full", s.color)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-white/40">
+                <Brain className="h-3 w-3" /> Next best concept
+              </div>
+              <div className="mt-1.5 text-[13px] font-semibold text-white">
+                List comprehensions
+              </div>
+              <div className="mt-0.5 text-[11px] text-white/50">
+                +12 mastery · 4 min est.
+              </div>
+            </div>
+          </div>
+
+          {/* Center — knowledge graph */}
+          <div className="relative col-span-6 h-[420px] overflow-hidden">
+            <KnowledgeGraph />
+          </div>
+
+          {/* Right rail — active activity */}
+          <div className="col-span-3 border-l border-white/[0.06] p-5">
+            <div className="text-[10px] font-medium uppercase tracking-widest text-white/40">
+              Session · Q 3 / 5
+            </div>
+            <div className="mt-3 text-[13px] font-medium text-white">
+              Which output does this expression produce?
+            </div>
+            <pre className="mt-3 overflow-hidden rounded-md border border-white/[0.06] bg-black/40 p-3 font-mono text-[11px] leading-relaxed text-white/80">
+              <span className="text-fuchsia-300">[x*x</span>{" "}
+              <span className="text-cyan-300">for</span> x{" "}
+              <span className="text-cyan-300">in</span>{" "}
+              <span className="text-emerald-300">range</span>(5){" "}
+              <span className="text-cyan-300">if</span> x % 2
+              <span className="text-fuchsia-300">]</span>
+            </pre>
+            <div className="mt-3 space-y-1.5">
+              {["[0,1,4,9,16]", "[1,9]", "[1,9,25]", "[0,4,16]"].map((o, i) => (
+                <motion.div
+                  key={o}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.9 + i * 0.08 }}
+                  className={cn(
+                    "flex items-center justify-between rounded-md border px-2.5 py-1.5 font-mono text-[11px]",
+                    i === 1
+                      ? "border-emerald-400/40 bg-emerald-400/[0.06] text-emerald-200"
+                      : "border-white/[0.06] bg-white/[0.02] text-white/60",
+                  )}
+                >
+                  <span>{o}</span>
+                  {i === 1 && <Check className="h-3 w-3" />}
+                </motion.div>
+              ))}
+            </div>
+            <div className="mt-4 rounded-md border border-white/[0.06] bg-white/[0.02] p-2.5 text-[11px] text-white/50">
+              <span className="text-white/70">Reasoning:</span> range(5) filtered
+              by odd → 1, 3 → squared.
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom bar — telemetry */}
+        <div className="flex items-center justify-between border-t border-white/[0.06] bg-black/30 px-4 py-2 text-[11px] text-white/50">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px] shadow-emerald-400" />
+              Adapting in real-time
+            </span>
+            <span className="font-mono">latency · 41ms</span>
+          </div>
+          <div className="flex items-center gap-4 font-mono">
+            <span>concepts: 214</span>
+            <span>mastered: 47</span>
+            <span>next-review: 3</span>
+          </div>
         </div>
       </div>
-
-      {/* floating chips */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="absolute -left-6 top-8 hidden rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-xs shadow-xl backdrop-blur md:block"
-      >
-        <div className="flex items-center gap-2 text-red-400">
-          <X className="h-3.5 w-3.5" />
-          <span className="font-mono">REJECT</span>
-        </div>
-        <div className="mt-0.5 text-[10px] text-gray-500">blocks event loop</div>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.75 }}
-        className="absolute -right-4 bottom-16 hidden rounded-lg border border-white/10 bg-black/80 px-3 py-2 text-xs shadow-xl backdrop-blur md:block"
-      >
-        <div className="flex items-center gap-2 text-emerald-400">
-          <Flame className="h-3.5 w-3.5" />
-          <span className="font-mono">12 day streak</span>
-        </div>
-        <div className="mt-0.5 text-[10px] text-gray-500">senior auditor · lvl 4</div>
-      </motion.div>
-    </div>
+    </motion.div>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  TRUSTED BY                                                                */
-/* -------------------------------------------------------------------------- */
+/* Animated knowledge graph SVG */
+function KnowledgeGraph() {
+  const nodes = [
+    { id: "vars", label: "Vars", x: 90, y: 90, state: "mastered" },
+    { id: "types", label: "Types", x: 200, y: 60, state: "mastered" },
+    { id: "func", label: "Functions", x: 310, y: 100, state: "mastered" },
+    { id: "iter", label: "Iterables", x: 160, y: 180, state: "mastered" },
+    { id: "compr", label: "Comprehensions", x: 300, y: 220, state: "active" },
+    { id: "gen", label: "Generators", x: 440, y: 170, state: "next" },
+    { id: "dec", label: "Decorators", x: 470, y: 300, state: "next" },
+    { id: "async", label: "Async", x: 320, y: 340, state: "locked" },
+    { id: "ctx", label: "Contexts", x: 170, y: 320, state: "locked" },
+  ];
+  const edges: [string, string][] = [
+    ["vars", "types"],
+    ["types", "func"],
+    ["vars", "iter"],
+    ["iter", "compr"],
+    ["func", "compr"],
+    ["func", "gen"],
+    ["compr", "gen"],
+    ["gen", "dec"],
+    ["compr", "async"],
+    ["gen", "async"],
+    ["iter", "ctx"],
+    ["dec", "async"],
+  ];
+  const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+  const colorFor = (s: string) =>
+    s === "mastered"
+      ? "#34d399"
+      : s === "active"
+      ? "#a78bfa"
+      : s === "next"
+      ? "#22d3ee"
+      : "#3f3f46";
 
-function TrustedBy() {
-  const logos = ["Vercel", "Linear", "Stripe", "Ramp", "Supabase", "Cloudflare", "Fly.io"];
   return (
-    <section className="border-b border-white/5">
-      <div className="mx-auto max-w-6xl px-6 py-14">
-        <p className="text-center font-mono text-xs uppercase tracking-[0.2em] text-gray-500">
-          Trusted by engineers at
-        </p>
-        <div className="mt-6 grid grid-cols-3 items-center gap-x-8 gap-y-6 md:grid-cols-7">
+    <svg viewBox="0 0 560 420" className="h-full w-full">
+      <defs>
+        <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      {edges.map(([a, b], i) => {
+        const A = byId[a];
+        const B = byId[b];
+        const active =
+          A.state === "mastered" && (B.state === "mastered" || B.state === "active");
+        return (
+          <motion.line
+            key={i}
+            x1={A.x}
+            y1={A.y}
+            x2={B.x}
+            y2={B.y}
+            stroke={active ? "#a78bfa" : "#ffffff"}
+            strokeOpacity={active ? 0.5 : 0.08}
+            strokeWidth={active ? 1.2 : 1}
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ delay: 0.4 + i * 0.05, duration: 0.6 }}
+          />
+        );
+      })}
+      {nodes.map((n, i) => (
+        <motion.g
+          key={n.id}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 + i * 0.06, type: "spring", stiffness: 120 }}
+        >
+          {n.state === "active" && (
+            <>
+              <circle cx={n.x} cy={n.y} r="42" fill="url(#halo)" />
+              <motion.circle
+                cx={n.x}
+                cy={n.y}
+                r="18"
+                fill="none"
+                stroke="#a78bfa"
+                strokeOpacity="0.6"
+                animate={{ r: [18, 30, 18], opacity: [0.6, 0, 0.6] }}
+                transition={{ duration: 2.4, repeat: Infinity }}
+              />
+            </>
+          )}
+          <circle
+            cx={n.x}
+            cy={n.y}
+            r="8"
+            fill={colorFor(n.state)}
+            stroke="black"
+            strokeWidth="2"
+          />
+          <text
+            x={n.x}
+            y={n.y + 22}
+            textAnchor="middle"
+            fill={n.state === "locked" ? "#52525b" : "#e4e4e7"}
+            fontSize="10"
+            fontFamily="Inter, sans-serif"
+            fontWeight="500"
+          >
+            {n.label}
+          </text>
+        </motion.g>
+      ))}
+    </svg>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*  LOGO STRIP                                                    */
+/* ────────────────────────────────────────────────────────────── */
+
+function LogoStrip() {
+  const logos = [
+    "STRIPE",
+    "VERCEL",
+    "LINEAR",
+    "ANTHROPIC",
+    "SUPABASE",
+    "NOTION",
+    "RAMP",
+  ];
+  return (
+    <section className="border-y border-white/[0.06] bg-black">
+      <div className="mx-auto max-w-7xl px-6 py-10">
+        <div className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">
+          Engineers from teams at
+        </div>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
           {logos.map((l) => (
             <div
               key={l}
-              className="text-center text-lg font-semibold tracking-tight text-gray-500 grayscale transition-all hover:text-gray-300"
+              className="text-[13px] font-semibold tracking-[0.28em] text-white/30 transition hover:text-white/70"
             >
               {l}
             </div>
@@ -392,52 +518,70 @@ function TrustedBy() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  HOW IT WORKS                                                              */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────────── */
+/*  PLATFORM PILLARS                                              */
+/* ────────────────────────────────────────────────────────────── */
 
-function HowItWorks() {
+function Pillars() {
   const items = [
     {
-      n: "01",
-      icon: Terminal,
-      title: "Review code",
-      body: "You're dropped into a real production diff. Read the intent. Read the code. Judge it.",
+      icon: Brain,
+      title: "Models what you already know",
+      body: "The engine estimates prior knowledge from adjacent skills. Coming from Java? You skip variables and loops on day one.",
     },
     {
-      n: "02",
-      icon: Shield,
-      title: "Detect bugs",
-      body: "Swipe left to reject. Swipe right to LGTM. Explain your reasoning with a targeted MCQ.",
+      icon: Network,
+      title: "Knowledge graph, not chapters",
+      body: "Every concept is a node with prerequisites, sibling ideas, and common misconceptions. Learn by dependency, not table of contents.",
     },
     {
-      n: "03",
-      icon: Zap,
-      title: "Level up",
-      body: "Earn XP, streaks, and mastery per concept. Track blind spots. Get promoted.",
+      icon: Target,
+      title: "The optimal next lesson",
+      body: "A Bayesian mastery model chooses the highest-value concept for you right now — factoring difficulty, retention, and confidence.",
+    },
+    {
+      icon: LineChart,
+      title: "Continuously calibrated",
+      body: "Every answer updates the model. Weak areas surface. Mastered concepts fade into scheduled review. Nothing is wasted.",
     },
   ];
   return (
-    <section className="border-b border-white/5">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <SectionHeader eyebrow="How it works" title="Three steps to a sharper eye." />
-        <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {items.map((it) => (
-            <div
-              key={it.n}
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-6 transition-all hover:border-white/20 hover:bg-white/[0.04]"
+    <section id="platform" className="relative border-b border-white/[0.06] py-28">
+      <GlowOrb className="left-1/3 top-1/2 h-[420px] w-[420px] bg-indigo-500/20" />
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <Eyebrow>The engine</Eyebrow>
+          <h2 className="mt-5 font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+            Not a course.
+            <span className="text-white/40"> An engine.</span>
+          </h2>
+          <p className="mt-4 text-[16px] text-white/60">
+            Four systems working in concert — so the platform can teach a Rust
+            veteran and a Python beginner from the same skill tree.
+          </p>
+        </div>
+
+        <div className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06] sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((it, i) => (
+            <motion.div
+              key={it.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ delay: i * 0.08, duration: 0.5 }}
+              className="group relative bg-black p-7"
             >
-              <div className="flex items-center justify-between">
-                <div className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-white/[0.03]">
-                  <it.icon className="h-4 w-4 text-emerald-400" strokeWidth={2.25} />
-                </div>
-                <span className="font-mono text-xs text-gray-600">{it.n}</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
+                <it.icon className="h-4.5 w-4.5 text-white/80" />
               </div>
-              <h3 className="mt-8 text-lg font-semibold tracking-tight text-white">
+              <div className="mt-5 text-[15px] font-semibold text-white">
                 {it.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-400">{it.body}</p>
-            </div>
+              </div>
+              <p className="mt-2 text-[13px] leading-relaxed text-white/55">
+                {it.body}
+              </p>
+              <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+            </motion.div>
           ))}
         </div>
       </div>
@@ -445,197 +589,864 @@ function HowItWorks() {
   );
 }
 
-function SectionHeader({
-  eyebrow,
-  title,
-  sub,
-}: {
-  eyebrow: string;
-  title: string;
-  sub?: string;
-}) {
+/* ────────────────────────────────────────────────────────────── */
+/*  ADAPTIVE ASSESSMENT DEMO                                      */
+/* ────────────────────────────────────────────────────────────── */
+
+function AssessmentDemo() {
+  const steps = [
+    {
+      q: "How would you describe your comfort with Python?",
+      a: "I've written Java for 6 years, no Python.",
+      inference: "Estimated ability: intermediate general programming, no Python-specific.",
+    },
+    {
+      q: "Given `x = [1,2,3]; y = x; y.append(4)` — what is `x`?",
+      a: "[1,2,3,4] — references share memory.",
+      inference: "Mastered: aliasing, mutability. Skipping 4 lessons.",
+    },
+    {
+      q: "What does `@staticmethod` change about a method?",
+      a: "Not sure.",
+      inference: "Gap detected: decorators & class semantics. Prioritized.",
+    },
+    {
+      q: "Explain what `async def` returns when called.",
+      a: "A coroutine that must be awaited.",
+      inference: "Mastered: async fundamentals. Advancing to concurrency patterns.",
+    },
+  ];
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const id = setInterval(
+      () => setStep((s) => (s + 1) % steps.length),
+      3800,
+    );
+    return () => clearInterval(id);
+  }, []);
+  const mastery = [22, 41, 43, 68][step];
+
   return (
-    <div className="max-w-2xl">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-emerald-400/80">
-        {eyebrow}
-      </p>
-      <h2 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-        {title}
-      </h2>
-      {sub && <p className="mt-4 text-base leading-relaxed text-gray-400">{sub}</p>}
+    <section id="curriculum" className="relative border-b border-white/[0.06] py-28">
+      <div className="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:items-center">
+        <div>
+          <Eyebrow>Adaptive assessment</Eyebrow>
+          <h2 className="mt-5 font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+            Six questions.
+            <br />
+            <span className="text-white/40">A curriculum for one.</span>
+          </h2>
+          <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-white/60">
+            Instead of a 40-question exam, Axiom asks a handful of well-chosen
+            questions. Each answer updates a probability distribution over
+            every concept in the graph — collapsing weeks of onboarding into
+            under a minute.
+          </p>
+          <ul className="mt-8 space-y-3">
+            {[
+              "Rapid convergence — 4-8 questions locate you in the graph",
+              "Confidence-weighted — 'not sure' is a valid, useful signal",
+              "Transferable knowledge is credited automatically",
+              "Re-run any time your skills change",
+            ].map((t) => (
+              <li key={t} className="flex items-start gap-2.5 text-[14px] text-white/75">
+                <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" />
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="relative">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-6">
+            <div className="flex items-center justify-between text-[11px] text-white/40">
+              <span className="font-mono">Question {step + 1} of 6</span>
+              <span className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Live inference
+              </span>
+            </div>
+
+            <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/5">
+              <motion.div
+                className="h-full bg-gradient-to-r from-indigo-400 to-fuchsia-400"
+                animate={{ width: `${((step + 1) / 6) * 100}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.35 }}
+                className="mt-6 space-y-4"
+              >
+                <div className="text-[15px] font-medium leading-relaxed text-white">
+                  {steps[step].q}
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 text-[13px] text-white/70">
+                  <span className="text-white/40">You:</span> {steps[step].a}
+                </div>
+                <div className="flex items-start gap-2 rounded-lg border border-indigo-400/20 bg-indigo-400/[0.05] p-3">
+                  <Brain className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-indigo-300" />
+                  <div className="text-[12px] leading-relaxed text-indigo-100/80">
+                    {steps[step].inference}
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="mt-6 grid grid-cols-3 gap-3 border-t border-white/[0.06] pt-5 text-[11px]">
+              <Stat label="Est. mastery" value={`${mastery}%`} />
+              <Stat label="Concepts placed" value={`${8 + step * 6}`} />
+              <Stat label="Time to lesson 1" value={`${28 - step * 4}s`} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-widest text-white/40">
+        {label}
+      </div>
+      <div className="mt-1 font-mono text-[16px] font-semibold tabular-nums text-white">
+        {value}
+      </div>
     </div>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  WHY IT WORKS                                                              */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────────── */
+/*  ACTIVITY TYPES                                                */
+/* ────────────────────────────────────────────────────────────── */
 
-function WhyItWorks() {
-  const stats = [
-    { k: "10×", v: "more time reading than writing code" },
-    { k: "62%", v: "of senior bugs are caught in review, not tests" },
-    { k: "1.2k", v: "curated production PRs, and growing" },
+function ActivityTypes() {
+  const types = [
+    { icon: Command, name: "Multiple choice", desc: "Rapid concept checks with distractors mined from real misconceptions." },
+    { icon: Terminal, name: "Interactive simulation", desc: "Run code in a sandbox. Trace state. Watch the runtime think." },
+    { icon: GitBranch, name: "Error detection", desc: "Swipe-review production code. Spot bugs, security issues, and hallucinations." },
+    { icon: Layers, name: "Ordering & sequencing", desc: "Drag steps into the correct order — request lifecycle, deployment flow." },
+    { icon: Cpu, name: "Scenario decisions", desc: "Design under constraint. Justify tradeoffs. Get graded on reasoning." },
+    { icon: Sparkles, name: "Explain-back", desc: "Teach the concept in your own words. Reviewed for accuracy and depth." },
   ];
   return (
-    <section className="border-b border-white/5">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-[1fr_1.1fr] lg:items-center">
-          <div>
-            <SectionHeader
-              eyebrow="Why it works"
-              title="Engineers read far more code than they write."
-              sub="Yet almost no tools train the skill. Zero-Syntax builds pattern recognition the way senior engineers actually built it — thousands of reps of judging other people's code."
-            />
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            {stats.map((s) => (
-              <div
-                key={s.k}
-                className="rounded-xl border border-white/10 bg-white/[0.02] p-6"
-              >
-                <div className="font-mono text-4xl font-semibold tracking-tight text-white">
-                  {s.k}
-                </div>
-                <p className="mt-2 text-sm text-gray-400">{s.v}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  INTERACTIVE DEMO (embed app)                                              */
-/* -------------------------------------------------------------------------- */
-
-function InteractiveDemo() {
-  return (
-    <section id="demo" className="border-b border-white/5 bg-[#050505]">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="text-center">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-emerald-400/80">
-            Try it
-          </p>
-          <h2 className="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-            Review a real PR. Right now.
+    <section className="relative border-b border-white/[0.06] py-28">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <Eyebrow>Learning activities</Eyebrow>
+          <h2 className="mt-5 font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+            Ten ways to prove you know it.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-gray-400">
-            Drag the card left to reject, right to approve. Your judgment is
-            immediately tested with a targeted question.
+          <p className="mt-4 text-[16px] text-white/60">
+            Different concepts require different interactions. Axiom picks the
+            right one — and grades reasoning, not just answers.
           </p>
         </div>
 
-        <div className="mt-12 flex justify-center">
-          <div className="relative">
-            <div
-              aria-hidden
-              className="absolute inset-0 -z-10 rounded-[3rem]"
-              style={{
-                background:
-                  "radial-gradient(closest-side, rgba(16,185,129,0.12), transparent 70%)",
-                filter: "blur(40px)",
-              }}
-            />
-            <SwipeGymApp />
-          </div>
+        <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {types.map((t, i) => (
+            <motion.div
+              key={t.name}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ delay: i * 0.04 }}
+              className="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent p-6 transition hover:border-white/20"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
+                  <t.icon className="h-4 w-4 text-white/80" />
+                </div>
+                <div className="text-[14px] font-semibold text-white">
+                  {t.name}
+                </div>
+              </div>
+              <p className="mt-3 text-[13px] leading-relaxed text-white/55">
+                {t.desc}
+              </p>
+              <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/[0.03] opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  FEATURES GRID                                                             */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────────── */
+/*  INTERACTIVE SWIPE DEMO                                        */
+/* ────────────────────────────────────────────────────────────── */
 
-function FeaturesGrid() {
-  const items = [
-    { icon: Layers, title: "Architecture reviews", body: "Judge boundaries, modules, and dependency flow." },
-    { icon: Activity, title: "Performance bugs", body: "Spot event-loop blockers, N+1s, and hot paths." },
-    { icon: Lock, title: "Security vulnerabilities", body: "SQL injection, SSRF, auth bypass, secrets in code." },
-    { icon: Cpu, title: "Concurrency & async", body: "Race conditions, deadlocks, and stale closures." },
-    { icon: GitBranch, title: "React & Node.js", body: "Hooks pitfalls, memory leaks, and lifecycle traps." },
-    { icon: Database, title: "Database queries", body: "Index misses, transaction scope, and query plans." },
-    { icon: Terminal, title: "Distributed systems", body: "Idempotency, retries, and consistency trade-offs." },
-    { icon: Sparkles, title: "System design", body: "Rate limits, back-pressure, and failure modes." },
-  ];
+const SWIPE_CARDS = [
+  {
+    title: "Auth middleware — PR #4821",
+    lang: "typescript",
+    code: `export function requireAuth(req, res, next) {
+  const token = req.headers.authorization
+  if (!token) return res.status(401).end()
+  const user = jwt.decode(token) // decode, not verify
+  req.user = user
+  next()
+}`,
+    bad: true,
+    concept: "JWT verification",
+    why:
+      "jwt.decode() does not check the signature. Any forged token with valid JSON is accepted. Use jwt.verify() with the shared secret.",
+  },
+  {
+    title: "React memoization — PR #911",
+    lang: "typescript",
+    code: `const Row = memo(function Row({ item, onSelect }) {
+  return <button onClick={() => onSelect(item.id)}>{item.name}</button>
+})
+
+// parent:
+<Row item={item} onSelect={id => setSelected(id)} />`,
+    bad: true,
+    concept: "Stable callbacks",
+    why:
+      "memo() bails out because onSelect is a new function every parent render. Wrap it in useCallback or hoist it above the render.",
+  },
+  {
+    title: "Postgres index — migration 0043",
+    lang: "sql",
+    code: `CREATE INDEX CONCURRENTLY idx_orders_user_created
+  ON orders (user_id, created_at DESC)
+  WHERE status IN ('paid', 'refunded');`,
+    bad: false,
+    concept: "Partial composite index",
+    why:
+      "Correct. Composite + partial index targets the hot query path without indexing dead rows. CONCURRENTLY avoids table locks.",
+  },
+];
+
+function SwipeDemo() {
+  const [i, setI] = useState(0);
+  const [feedback, setFeedback] = useState<null | { correct: boolean; card: typeof SWIPE_CARDS[number] }>(null);
+  const [streak, setStreak] = useState(0);
+  const [xp, setXp] = useState(120);
+
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-14, 14]);
+  const opacity = useTransform(x, [-200, -60, 0, 60, 200], [0.3, 1, 1, 1, 0.3]);
+  const approveOpacity = useTransform(x, [20, 120], [0, 1]);
+  const rejectOpacity = useTransform(x, [-120, -20], [1, 0]);
+
+  const card = SWIPE_CARDS[i % SWIPE_CARDS.length];
+
+  function resolve(dir: "left" | "right") {
+    const userSaysBad = dir === "left";
+    const correct = userSaysBad === card.bad;
+    setFeedback({ correct, card });
+    if (correct) {
+      setStreak((s) => s + 1);
+      setXp((v) => v + 25);
+    } else {
+      setStreak(0);
+    }
+  }
+  function nextCard() {
+    setFeedback(null);
+    setI((n) => n + 1);
+    x.set(0);
+  }
+
   return (
-    <section id="features" className="border-b border-white/5">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <SectionHeader
-          eyebrow="Features"
-          title="Every category a senior is expected to catch."
-        />
-        <div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/5 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((it) => (
-            <div
-              key={it.title}
-              className="group flex flex-col gap-4 bg-black p-6 transition-colors hover:bg-white/[0.02]"
+    <section id="demo" className="relative border-b border-white/[0.06] py-28">
+      <GlowOrb className="right-1/4 top-1/3 h-[380px] w-[380px] bg-fuchsia-500/20" />
+      <div className="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:items-center">
+        <div>
+          <Eyebrow>Try one activity</Eyebrow>
+          <h2 className="mt-5 font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+            Approve. Reject.
+            <br />
+            <span className="text-white/40">Build engineering judgment.</span>
+          </h2>
+          <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-white/60">
+            A live sample of one activity type — swipe-based code review, drawn
+            from anonymized production PRs. Reasoning matters more than the
+            swipe: after each card, Axiom asks <em>why</em>.
+          </p>
+
+          <div className="mt-8 grid max-w-md grid-cols-3 gap-3">
+            <StatCard icon={Flame} label="Streak" value={streak} />
+            <StatCard icon={Zap} label="XP" value={xp} />
+            <StatCard icon={TrendingUp} label="Mastery" value="B+" />
+          </div>
+
+          <div className="mt-8 flex items-center gap-4 text-[12px] text-white/50">
+            <span className="flex items-center gap-1.5">
+              <kbd className="rounded border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono text-[10px]">
+                ←
+              </kbd>
+              Reject
+            </span>
+            <span className="flex items-center gap-1.5">
+              <kbd className="rounded border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono text-[10px]">
+                →
+              </kbd>
+              Approve
+            </span>
+          </div>
+        </div>
+
+        <div className="relative mx-auto h-[520px] w-full max-w-md">
+          <AnimatePresence>
+            {!feedback && (
+              <motion.div
+                key={i}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -100) resolve("left");
+                  else if (info.offset.x > 100) resolve("right");
+                }}
+                style={{ x, rotate, opacity }}
+                className="absolute inset-0 cursor-grab active:cursor-grabbing"
+              >
+                <ReviewCard card={card} approveOpacity={approveOpacity} rejectOpacity={rejectOpacity} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {feedback && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-6"
+              >
+                <div
+                  className={cn(
+                    "inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                    feedback.correct
+                      ? "bg-emerald-400/10 text-emerald-300"
+                      : "bg-rose-400/10 text-rose-300",
+                  )}
+                >
+                  {feedback.correct ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <X className="h-3 w-3" />
+                  )}
+                  {feedback.correct ? "Correct call" : "Not quite"}
+                </div>
+                <div className="mt-4 text-[15px] font-semibold text-white">
+                  {feedback.card.concept}
+                </div>
+                <p className="mt-2 text-[13px] leading-relaxed text-white/65">
+                  {feedback.card.why}
+                </p>
+                <div className="mt-auto flex items-center justify-between border-t border-white/[0.06] pt-4">
+                  <div className="text-[11px] text-white/40">
+                    Mastery on <span className="text-white/70">{feedback.card.concept}</span> ↑
+                  </div>
+                  <button
+                    onClick={nextCard}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-[12px] font-semibold text-black hover:bg-white/90"
+                  >
+                    Next
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {!feedback && (
+            <div className="pointer-events-none absolute -bottom-4 left-1/2 flex -translate-x-1/2 gap-2 text-[11px] text-white/40">
+              <span>Drag or use ← →</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <KeyboardBridge onResolve={resolve} active={!feedback} />
+    </section>
+  );
+}
+
+function KeyboardBridge({
+  onResolve,
+  active,
+}: {
+  onResolve: (d: "left" | "right") => void;
+  active: boolean;
+}) {
+  useEffect(() => {
+    if (!active) return;
+    const on = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") onResolve("left");
+      if (e.key === "ArrowRight") onResolve("right");
+    };
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, [onResolve, active]);
+  return null;
+}
+
+function ReviewCard({
+  card,
+  approveOpacity,
+  rejectOpacity,
+}: {
+  card: (typeof SWIPE_CARDS)[number];
+  approveOpacity: any;
+  rejectOpacity: any;
+}) {
+  return (
+    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-[#0e0e12] to-black shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)]">
+      <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
+        <div className="flex items-center gap-2">
+          <GitBranch className="h-3.5 w-3.5 text-white/50" />
+          <span className="text-[12px] font-medium text-white/80">
+            {card.title}
+          </span>
+        </div>
+        <span className="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] uppercase text-white/50">
+          {card.lang}
+        </span>
+      </div>
+      <pre className="flex-1 overflow-auto p-5 font-mono text-[12px] leading-[1.7] text-white/85">
+        <code>{highlight(card.code)}</code>
+      </pre>
+      <div className="border-t border-white/[0.06] bg-black/40 px-4 py-3 text-[11px] text-white/40">
+        Concept · <span className="text-white/70">{card.concept}</span>
+      </div>
+
+      <motion.div
+        style={{ opacity: approveOpacity }}
+        className="pointer-events-none absolute right-4 top-4 rounded-lg border-2 border-emerald-400 px-3 py-1 text-[13px] font-bold uppercase tracking-wider text-emerald-400"
+      >
+        Approve
+      </motion.div>
+      <motion.div
+        style={{ opacity: rejectOpacity }}
+        className="pointer-events-none absolute left-4 top-4 rounded-lg border-2 border-rose-400 px-3 py-1 text-[13px] font-bold uppercase tracking-wider text-rose-400"
+      >
+        Reject
+      </motion.div>
+    </div>
+  );
+}
+
+/* Minimal syntax highlighter — keywords / strings / comments */
+function highlight(code: string) {
+  const KW = /\b(const|let|var|function|return|if|else|for|while|export|import|from|new|class|extends|await|async|try|catch|throw|CREATE|INDEX|ON|WHERE|IN|CONCURRENTLY|DESC)\b/g;
+  const STR = /(["'`])(?:\\.|(?!\1).)*\1/g;
+  const CMT = /(\/\/[^\n]*|--[^\n]*)/g;
+  const NUM = /\b\d+\b/g;
+  type Part = { t: string; c?: string };
+  const parts: Part[] = [{ t: code }];
+  const apply = (re: RegExp, cls: string) => {
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      if (p.c) continue;
+      const out: Part[] = [];
+      let last = 0;
+      p.t.replace(re, (m, ..._a) => {
+        const idx = _a[_a.length - 2] as number;
+        if (idx > last) out.push({ t: p.t.slice(last, idx) });
+        out.push({ t: m, c: cls });
+        last = idx + m.length;
+        return m;
+      });
+      if (last < p.t.length) out.push({ t: p.t.slice(last) });
+      parts.splice(i, 1, ...out);
+      i += out.length - 1;
+    }
+  };
+  apply(CMT, "text-white/30 italic");
+  apply(STR, "text-emerald-300");
+  apply(KW, "text-fuchsia-300");
+  apply(NUM, "text-cyan-300");
+  return parts.map((p, i) =>
+    p.c ? (
+      <span key={i} className={p.c}>
+        {p.t}
+      </span>
+    ) : (
+      <span key={i}>{p.t}</span>
+    ),
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: any;
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-white/40">
+        <Icon className="h-3 w-3" /> {label}
+      </div>
+      <div className="mt-1 font-mono text-[18px] font-semibold text-white">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*  SKILL LIBRARY                                                 */
+/* ────────────────────────────────────────────────────────────── */
+
+const SKILL_TAGS = [
+  { name: "Python", learners: "48k", tone: "from-yellow-300/20 to-yellow-500/5" },
+  { name: "Rust", learners: "12k", tone: "from-orange-400/20 to-orange-600/5" },
+  { name: "Go", learners: "19k", tone: "from-cyan-300/20 to-cyan-500/5" },
+  { name: "TypeScript", learners: "61k", tone: "from-blue-400/20 to-blue-600/5" },
+  { name: "React", learners: "54k", tone: "from-sky-400/20 to-sky-600/5" },
+  { name: "SQL", learners: "37k", tone: "from-indigo-400/20 to-indigo-600/5" },
+  { name: "System Design", learners: "29k", tone: "from-fuchsia-400/20 to-fuchsia-600/5" },
+  { name: "Kubernetes", learners: "16k", tone: "from-blue-300/20 to-blue-500/5" },
+  { name: "Docker", learners: "22k", tone: "from-sky-300/20 to-sky-500/5" },
+  { name: "AWS", learners: "31k", tone: "from-amber-400/20 to-amber-600/5" },
+  { name: "Machine Learning", learners: "27k", tone: "from-emerald-400/20 to-emerald-600/5" },
+  { name: "Prompt Engineering", learners: "44k", tone: "from-violet-400/20 to-violet-600/5" },
+  { name: "Cybersecurity", learners: "18k", tone: "from-rose-400/20 to-rose-600/5" },
+  { name: "Linux", learners: "24k", tone: "from-zinc-300/20 to-zinc-500/5" },
+  { name: "Git", learners: "39k", tone: "from-red-400/20 to-red-600/5" },
+  { name: "Networking", learners: "14k", tone: "from-teal-400/20 to-teal-600/5" },
+  { name: "DevOps", learners: "21k", tone: "from-lime-400/20 to-lime-600/5" },
+  { name: "AI Engineering", learners: "33k", tone: "from-purple-400/20 to-purple-600/5" },
+  { name: "Data Structures", learners: "42k", tone: "from-pink-400/20 to-pink-600/5" },
+  { name: "Statistics", learners: "11k", tone: "from-green-400/20 to-green-600/5" },
+];
+
+function SkillLibrary() {
+  return (
+    <section id="skills" className="relative border-b border-white/[0.06] py-28">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <Eyebrow>Skill library</Eyebrow>
+            <h2 className="mt-5 max-w-2xl font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+              Any technical skill.
+              <span className="text-white/40"> One engine.</span>
+            </h2>
+          </div>
+          <p className="max-w-md text-[15px] text-white/60">
+            The knowledge graph works for languages, frameworks, systems, and
+            concepts. New skill trees ship weekly.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {SKILL_TAGS.map((s, i) => (
+            <motion.a
+              key={s.name}
+              href="#demo"
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ delay: (i % 12) * 0.02 }}
+              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-4 transition hover:border-white/20 hover:bg-white/[0.04]"
             >
-              <it.icon className="h-4 w-4 text-emerald-400" strokeWidth={2.25} />
-              <div>
-                <h3 className="text-sm font-semibold tracking-tight text-white">{it.title}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-gray-500">{it.body}</p>
+              <div
+                className={cn(
+                  "absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100",
+                  s.tone,
+                )}
+              />
+              <div className="relative flex items-center justify-between">
+                <div>
+                  <div className="text-[14px] font-semibold text-white">
+                    {s.name}
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-white/50">
+                    {s.learners} learners
+                  </div>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-white/30 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
+              </div>
+            </motion.a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*  DASHBOARD MOCK                                                */
+/* ────────────────────────────────────────────────────────────── */
+
+function DashboardShowcase() {
+  return (
+    <section className="relative border-b border-white/[0.06] py-28">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <Eyebrow>Your progress</Eyebrow>
+          <h2 className="mt-5 font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+            A map of what you know.
+          </h2>
+          <p className="mt-4 text-[16px] text-white/60">
+            Forget "10 lessons completed." Axiom shows you mastery, retention,
+            velocity, and where to invest next.
+          </p>
+        </div>
+
+        <div className="mt-14 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-black">
+          <div className="grid grid-cols-12 gap-0 border-b border-white/[0.06]">
+            <div className="col-span-3 border-r border-white/[0.06] p-5">
+              <div className="text-[10px] uppercase tracking-widest text-white/40">
+                Current skill
+              </div>
+              <div className="mt-1.5 text-[18px] font-semibold text-white">
+                Python
+              </div>
+              <div className="mt-4 space-y-4">
+                <Metric label="Overall mastery" value="72%" />
+                <Metric label="Concepts mastered" value="41 / 68" />
+                <Metric label="Retention (7-day)" value="94%" />
+                <Metric label="Learning velocity" value="+12% wk" tone="emerald" />
               </div>
             </div>
-          ))}
+            <div className="col-span-6 border-r border-white/[0.06] p-5">
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] uppercase tracking-widest text-white/40">
+                  Mastery over time
+                </div>
+                <div className="flex gap-1 text-[10px] text-white/40">
+                  <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-white/70">
+                    30d
+                  </span>
+                  <span className="px-1.5 py-0.5">90d</span>
+                  <span className="px-1.5 py-0.5">All</span>
+                </div>
+              </div>
+              <MasteryChart />
+            </div>
+            <div className="col-span-3 p-5">
+              <div className="text-[10px] uppercase tracking-widest text-white/40">
+                Next up
+              </div>
+              <div className="mt-3 space-y-2.5">
+                {[
+                  { c: "Context managers", m: "prereq mastered", t: "5 min" },
+                  { c: "AsyncIO patterns", m: "weakness detected", t: "9 min" },
+                  { c: "Metaclasses", m: "stretch concept", t: "12 min" },
+                ].map((r) => (
+                  <div
+                    key={r.c}
+                    className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3"
+                  >
+                    <div className="text-[13px] font-medium text-white">
+                      {r.c}
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-white/50">
+                      <span>{r.m}</span>
+                      <span className="font-mono">{r.t}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-widest text-white/40">
+                Concept heatmap
+              </div>
+              <div className="flex items-center gap-2 text-[10px] text-white/40">
+                <span>Weak</span>
+                <div className="flex gap-0.5">
+                  {["bg-rose-500/70", "bg-amber-400/70", "bg-yellow-300/70", "bg-lime-400/70", "bg-emerald-400/80"].map(
+                    (c) => (
+                      <div key={c} className={cn("h-2 w-4 rounded-sm", c)} />
+                    ),
+                  )}
+                </div>
+                <span>Mastered</span>
+              </div>
+            </div>
+            <Heatmap />
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  TESTIMONIALS                                                              */
-/* -------------------------------------------------------------------------- */
+function Metric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "emerald";
+}) {
+  return (
+    <div>
+      <div className="text-[11px] text-white/50">{label}</div>
+      <div
+        className={cn(
+          "mt-0.5 font-mono text-[18px] font-semibold tabular-nums",
+          tone === "emerald" ? "text-emerald-300" : "text-white",
+        )}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function MasteryChart() {
+  const pts = useMemo(() => {
+    const arr: number[] = [];
+    let v = 22;
+    for (let i = 0; i < 30; i++) {
+      v += Math.random() * 4 - 0.5;
+      v = Math.max(20, Math.min(80, v));
+      arr.push(v);
+    }
+    return arr;
+  }, []);
+  const w = 600;
+  const h = 160;
+  const path = pts
+    .map((v, i) => {
+      const x = (i / (pts.length - 1)) * w;
+      const y = h - ((v - 20) / 60) * h;
+      return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ");
+  const fill = `${path} L ${w} ${h} L 0 ${h} Z`;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="mt-4 h-40 w-full">
+      <defs>
+        <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[0, 1, 2, 3].map((i) => (
+        <line
+          key={i}
+          x1="0"
+          x2={w}
+          y1={(h / 3) * i}
+          y2={(h / 3) * i}
+          stroke="#ffffff"
+          strokeOpacity="0.05"
+        />
+      ))}
+      <motion.path
+        d={fill}
+        fill="url(#fillGrad)"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+      />
+      <motion.path
+        d={path}
+        fill="none"
+        stroke="#a78bfa"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        initial={{ pathLength: 0 }}
+        whileInView={{ pathLength: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      />
+    </svg>
+  );
+}
+
+function Heatmap() {
+  const cells = useMemo(() => {
+    return Array.from({ length: 7 * 24 }, () => Math.random());
+  }, []);
+  const colorFor = (v: number) => {
+    if (v < 0.2) return "bg-white/[0.04]";
+    if (v < 0.4) return "bg-rose-500/60";
+    if (v < 0.55) return "bg-amber-400/60";
+    if (v < 0.7) return "bg-yellow-300/60";
+    if (v < 0.85) return "bg-lime-400/70";
+    return "bg-emerald-400/80";
+  };
+  return (
+    <div className="mt-4 grid grid-cols-24 gap-1" style={{ gridTemplateColumns: "repeat(24, minmax(0,1fr))" }}>
+      {cells.map((v, i) => (
+        <div
+          key={i}
+          className={cn("h-4 rounded-sm transition hover:scale-125", colorFor(v))}
+          title={`concept ${i + 1}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*  TESTIMONIALS                                                  */
+/* ────────────────────────────────────────────────────────────── */
+
+const QUOTES = [
+  {
+    q: "I came in with 8 years of backend. Axiom skipped the boring parts and had me writing idiomatic Rust in a week. No course has ever done that.",
+    a: "Marielle O.",
+    r: "Staff Engineer, Fintech",
+  },
+  {
+    q: "The knowledge graph is the thing. I finally understand what I don't know — and the platform actually teaches me that, not what a curriculum author guessed.",
+    a: "Devansh K.",
+    r: "SRE, Series C SaaS",
+  },
+  {
+    q: "It's the first learning tool that respects my time. Every session feels calibrated. Nothing wasted.",
+    a: "Priya S.",
+    r: "ML Engineer",
+  },
+];
 
 function Testimonials() {
-  const items = [
-    {
-      quote:
-        "The first tool that actually trains code review. My team's PR feedback got measurably sharper in a month.",
-      name: "Ava Chen",
-      role: "Staff Engineer, Ramp",
-    },
-    {
-      quote:
-        "It's not Duolingo for coding. It's the flight simulator for the part of engineering nobody teaches.",
-      name: "Marcus Odom",
-      role: "Principal, Cloudflare",
-    },
-    {
-      quote:
-        "I promoted two engineers last quarter. Both credited Zero-Syntax as the reason review comments started landing.",
-      name: "Priya Nair",
-      role: "EM, Vercel",
-    },
-  ];
   return (
-    <section className="border-b border-white/5">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <SectionHeader eyebrow="Testimonials" title="Reviewed by senior engineers." />
-        <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {items.map((t) => (
-            <figure
-              key={t.name}
-              className="rounded-xl border border-white/10 bg-white/[0.02] p-6"
+    <section className="relative border-b border-white/[0.06] py-28">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="grid gap-6 md:grid-cols-3">
+          {QUOTES.map((q, i) => (
+            <motion.figure
+              key={q.a}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ delay: i * 0.08 }}
+              className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent p-7"
             >
-              <blockquote className="text-sm leading-relaxed text-gray-200">
-                "{t.quote}"
+              <blockquote className="text-[15px] leading-relaxed text-white/85">
+                "{q.q}"
               </blockquote>
-              <figcaption className="mt-6 flex items-center gap-3">
-                <div className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-xs font-medium text-gray-300">
-                  {t.name.split(" ").map((s) => s[0]).join("")}
+              <figcaption className="mt-6 flex items-center gap-3 border-t border-white/[0.06] pt-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-white/20 to-white/5 text-[12px] font-semibold text-white">
+                  {q.a.split(" ").map((n) => n[0]).join("")}
                 </div>
                 <div>
-                  <div className="text-xs font-medium text-white">{t.name}</div>
-                  <div className="text-[11px] text-gray-500">{t.role}</div>
+                  <div className="text-[13px] font-medium text-white">
+                    {q.a}
+                  </div>
+                  <div className="text-[11px] text-white/50">{q.r}</div>
                 </div>
               </figcaption>
-            </figure>
+            </motion.figure>
           ))}
         </div>
       </div>
@@ -643,96 +1454,123 @@ function Testimonials() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  PRICING                                                                   */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────────── */
+/*  PRICING                                                       */
+/* ────────────────────────────────────────────────────────────── */
+
+const PLANS = [
+  {
+    name: "Learner",
+    price: "Free",
+    tag: "Get placed",
+    body: "For self-directed engineers exploring one skill.",
+    features: [
+      "1 active skill",
+      "Adaptive assessment",
+      "Personalized curriculum",
+      "Basic progress analytics",
+    ],
+    cta: "Start free",
+    highlight: false,
+  },
+  {
+    name: "Pro",
+    price: "$18",
+    per: "/mo",
+    tag: "Most popular",
+    body: "For engineers investing in a long-horizon skill map.",
+    features: [
+      "Unlimited skills",
+      "All activity types",
+      "AI tutor & explain-back",
+      "Spaced repetition",
+      "Concept heatmap & velocity",
+    ],
+    cta: "Go Pro",
+    highlight: true,
+  },
+  {
+    name: "Team",
+    price: "$32",
+    per: "/seat",
+    tag: "Growing teams",
+    body: "For teams levelling up together with shared skill maps.",
+    features: [
+      "Everything in Pro",
+      "Team skill dashboards",
+      "Manager review sessions",
+      "SSO & SCIM",
+      "Priority support",
+    ],
+    cta: "Contact sales",
+    highlight: false,
+  },
+];
 
 function Pricing() {
-  const tiers = [
-    {
-      name: "Free",
-      price: "$0",
-      cadence: "forever",
-      features: ["10 PRs / day", "Core concepts", "Streaks & XP", "Community"],
-      cta: "Start free",
-      featured: false,
-    },
-    {
-      name: "Pro",
-      price: "$12",
-      cadence: "/ month",
-      features: [
-        "Unlimited PRs",
-        "All concept tracks",
-        "Personal blind-spot report",
-        "Priority new content",
-        "Keyboard-first shortcuts",
-      ],
-      cta: "Go Pro",
-      featured: true,
-    },
-    {
-      name: "Teams",
-      price: "$29",
-      cadence: "/ seat / mo",
-      features: [
-        "Everything in Pro",
-        "Org-level analytics",
-        "Custom PR sets",
-        "SSO & SCIM",
-        "Dedicated support",
-      ],
-      cta: "Contact sales",
-      featured: false,
-    },
-  ];
   return (
-    <section id="pricing" className="border-b border-white/5">
-      <div className="mx-auto max-w-6xl px-6 py-24">
-        <SectionHeader eyebrow="Pricing" title="Simple. Priced like a coffee." />
-        <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {tiers.map((t) => (
+    <section id="pricing" className="relative border-b border-white/[0.06] py-28">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <Eyebrow>Pricing</Eyebrow>
+          <h2 className="mt-5 font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+            Priced for the way you learn.
+          </h2>
+          <p className="mt-4 text-[16px] text-white/60">
+            Start free forever. Upgrade when you're ready to master more than one skill.
+          </p>
+        </div>
+
+        <div className="mt-14 grid gap-4 md:grid-cols-3">
+          {PLANS.map((p) => (
             <div
-              key={t.name}
-              className={
-                "relative rounded-xl border p-6 transition-all " +
-                (t.featured
-                  ? "border-emerald-500/40 bg-emerald-500/[0.03]"
-                  : "border-white/10 bg-white/[0.02] hover:border-white/20")
-              }
+              key={p.name}
+              className={cn(
+                "relative flex flex-col rounded-2xl border p-7",
+                p.highlight
+                  ? "border-white/25 bg-gradient-to-b from-white/[0.08] to-white/[0.02]"
+                  : "border-white/10 bg-white/[0.02]",
+              )}
             >
-              {t.featured && (
-                <div className="absolute -top-2 left-6 rounded-full border border-emerald-500/40 bg-black px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-emerald-400">
-                  Most popular
+              {p.highlight && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-black">
+                  {p.tag}
                 </div>
               )}
-              <div className="flex items-baseline justify-between">
-                <h3 className="text-lg font-semibold text-white">{t.name}</h3>
+              <div className="text-[13px] font-medium text-white/60">
+                {p.name}
               </div>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-semibold tracking-tight text-white">
-                  {t.price}
-                </span>
-                <span className="text-sm text-gray-500">{t.cadence}</span>
+              <div className="mt-3 flex items-baseline gap-1">
+                <div className="text-4xl font-semibold tracking-tight text-white">
+                  {p.price}
+                </div>
+                {p.per && (
+                  <div className="text-[13px] text-white/50">{p.per}</div>
+                )}
               </div>
-              <ul className="mt-6 space-y-2.5">
-                {t.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-gray-300">
-                    <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+              <p className="mt-2 text-[13px] text-white/55">{p.body}</p>
+              <ul className="mt-6 flex-1 space-y-2.5">
+                {p.features.map((f) => (
+                  <li
+                    key={f}
+                    className="flex items-start gap-2 text-[13px] text-white/75"
+                  >
+                    <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <button
-                className={
-                  "mt-8 w-full rounded-md px-4 py-2 text-sm font-medium transition-all " +
-                  (t.featured
-                    ? "bg-white text-black hover:bg-gray-200"
-                    : "border border-white/10 bg-white/[0.03] text-white hover:border-white/20 hover:bg-white/[0.06]")
-                }
+              <a
+                href="#demo"
+                className={cn(
+                  "mt-7 inline-flex items-center justify-center rounded-full px-4 py-2.5 text-[13px] font-semibold transition",
+                  p.highlight
+                    ? "bg-white text-black hover:bg-white/90"
+                    : "border border-white/15 bg-white/[0.03] text-white hover:bg-white/[0.06]",
+                )}
               >
-                {t.cta}
-              </button>
+                {p.cta}
+              </a>
             </div>
           ))}
         </div>
@@ -741,67 +1579,83 @@ function Pricing() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  FAQ                                                                       */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────────── */
+/*  FAQ                                                           */
+/* ────────────────────────────────────────────────────────────── */
+
+const FAQS = [
+  {
+    q: "How is this different from an online course?",
+    a: "Courses are linear and identical for every learner. Axiom generates a unique curriculum for every user, based on demonstrated knowledge — you skip what you know and drill what you don't.",
+  },
+  {
+    q: "How does the platform know what I already know?",
+    a: "A short adaptive assessment estimates your ability using a Bayesian mastery model. It also credits transferable knowledge — coming from Java, you inherit a lot of Python fundamentals for free.",
+  },
+  {
+    q: "What kinds of skills can I learn?",
+    a: "Any technical skill with a well-defined concept graph — programming languages, frameworks, systems, cloud platforms, ML, prompt engineering, security, product, and design. New skill trees ship weekly.",
+  },
+  {
+    q: "Is it just multiple choice?",
+    a: "No. Axiom uses ten interaction types — simulations, error-detection swipes, ordering, scenario decisions, explain-back — and grades reasoning, not just correctness.",
+  },
+  {
+    q: "Can teams use this?",
+    a: "Yes. Team plans include shared skill maps, manager review sessions, and SSO. Teams use Axiom for onboarding and continuous levelling.",
+  },
+  {
+    q: "Do you store my learning data?",
+    a: "Encrypted at rest, never sold. You own your data and can export or delete it any time. SOC 2 in progress.",
+  },
+];
 
 function FAQ() {
-  const items = [
-    {
-      q: "Do I actually write code?",
-      a: "No. Zero-Syntax trains the read-and-judge muscle, not typing. You review diffs and answer targeted questions. That's the point.",
-    },
-    {
-      q: "Where do the PRs come from?",
-      a: "Real production code from open-source projects, curated and rewritten by senior engineers into review-length challenges.",
-    },
-    {
-      q: "Which stacks are covered?",
-      a: "Node, React, TypeScript, Go, Python, and Rust today. Distributed systems and database internals throughout.",
-    },
-    {
-      q: "Can my team use it together?",
-      a: "Yes — the Teams plan includes org analytics, custom PR sets, and SSO.",
-    },
-  ];
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" className="border-b border-white/5">
-      <div className="mx-auto max-w-3xl px-6 py-24">
-        <SectionHeader eyebrow="FAQ" title="Questions, answered." />
-        <div className="mt-10 divide-y divide-white/10 rounded-xl border border-white/10 bg-white/[0.02]">
-          {items.map((it, i) => {
+    <section className="relative border-b border-white/[0.06] py-28">
+      <div className="mx-auto max-w-3xl px-6">
+        <div className="text-center">
+          <Eyebrow>FAQ</Eyebrow>
+          <h2 className="mt-5 font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-5xl">
+            Questions, answered.
+          </h2>
+        </div>
+        <div className="mt-12 divide-y divide-white/[0.06] rounded-2xl border border-white/10 bg-white/[0.02]">
+          {FAQS.map((f, i) => {
             const isOpen = open === i;
             return (
-              <button
-                key={it.q}
-                onClick={() => setOpen(isOpen ? null : i)}
-                className="w-full px-6 py-5 text-left"
-                aria-expanded={isOpen}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm font-medium text-white">{it.q}</span>
+              <div key={f.q}>
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-left"
+                >
+                  <span className="text-[14px] font-medium text-white">
+                    {f.q}
+                  </span>
                   <ChevronDown
-                    className={
-                      "h-4 w-4 flex-none text-gray-500 transition-transform " +
-                      (isOpen ? "rotate-180" : "")
-                    }
+                    className={cn(
+                      "h-4 w-4 text-white/40 transition-transform",
+                      isOpen && "rotate-180",
+                    )}
                   />
-                </div>
+                </button>
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{ duration: 0.25 }}
                       className="overflow-hidden"
                     >
-                      <p className="pt-3 text-sm leading-relaxed text-gray-400">{it.a}</p>
+                      <div className="px-5 pb-5 text-[13px] leading-relaxed text-white/60">
+                        {f.a}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -810,591 +1664,139 @@ function FAQ() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  FOOTER                                                                    */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────────────────────────── */
+/*  CTA + FOOTER                                                  */
+/* ────────────────────────────────────────────────────────────── */
+
+function CTA() {
+  return (
+    <section className="relative overflow-hidden py-28">
+      <GlowOrb className="left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 bg-indigo-500/40" />
+      <div className="relative mx-auto max-w-3xl px-6 text-center">
+        <h2 className="font-sans text-4xl font-semibold tracking-[-0.03em] text-white sm:text-6xl">
+          Learn like the platform
+          <br />
+          <span className="bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+            was built for you.
+          </span>
+        </h2>
+        <p className="mx-auto mt-5 max-w-md text-[16px] text-white/60">
+          Because it is. Take the 60-second assessment and see your first
+          personalized curriculum in under a minute.
+        </p>
+        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="#demo"
+            className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[14px] font-semibold text-black hover:bg-white/90"
+          >
+            Start free
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </a>
+          <a
+            href="#skills"
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-6 py-3 text-[14px] font-medium text-white backdrop-blur hover:bg-white/[0.06]"
+          >
+            Browse skills
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function Footer() {
   return (
-    <footer className="border-t border-white/5">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <div className="grid h-6 w-6 place-items-center rounded-md border border-white/10 bg-white/[0.03]">
-            <Terminal className="h-3.5 w-3.5 text-emerald-400" />
+    <footer className="border-t border-white/[0.06] bg-black">
+      <div className="mx-auto max-w-7xl px-6 py-14">
+        <div className="grid gap-10 md:grid-cols-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="relative h-6 w-6">
+                <div className="absolute inset-0 rounded-md bg-gradient-to-br from-white to-white/40" />
+                <div className="absolute inset-[3px] rounded-[3px] bg-black" />
+                <div className="absolute inset-[6px] rounded-[1px] bg-gradient-to-br from-white to-white/60" />
+              </div>
+              <span className="text-[15px] font-semibold text-white">Axiom</span>
+            </div>
+            <p className="mt-4 max-w-xs text-[12px] leading-relaxed text-white/50">
+              The adaptive learning platform for engineers. Built for the way
+              you actually learn.
+            </p>
+            <div className="mt-5 flex items-center gap-3">
+              <a href="#" className="text-white/40 hover:text-white">
+                <Github className="h-4 w-4" />
+              </a>
+              <a href="#" className="text-white/40 hover:text-white">
+                <Twitter className="h-4 w-4" />
+              </a>
+            </div>
           </div>
-          <span className="font-semibold text-white">Zero-Syntax</span>
-          <span className="text-gray-600">·</span>
-          <span>© 2026</span>
+          {[
+            {
+              t: "Platform",
+              l: ["How it works", "Knowledge graph", "Skill library", "Roadmap"],
+            },
+            {
+              t: "Company",
+              l: ["About", "Careers", "Blog", "Contact"],
+            },
+            {
+              t: "Legal",
+              l: ["Privacy", "Terms", "Security", "Status"],
+            },
+          ].map((col) => (
+            <div key={col.t}>
+              <div className="text-[11px] font-semibold uppercase tracking-widest text-white/40">
+                {col.t}
+              </div>
+              <ul className="mt-4 space-y-2.5">
+                {col.l.map((i) => (
+                  <li key={i}>
+                    <a
+                      href="#"
+                      className="text-[13px] text-white/60 hover:text-white"
+                    >
+                      {i}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-        <div className="flex items-center gap-6 text-sm text-gray-400">
-          <a href="#" className="hover:text-white">Docs</a>
-          <a href="#" className="hover:text-white">Changelog</a>
-          <a href="#" className="hover:text-white">Careers</a>
-          <a href="#" className="hover:text-white" aria-label="GitHub"><Github className="h-4 w-4" /></a>
-          <a href="#" className="hover:text-white" aria-label="Twitter"><Twitter className="h-4 w-4" /></a>
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06] pt-6 text-[11px] text-white/40">
+          <div>© {new Date().getFullYear()} Axiom Labs, Inc.</div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400" />
+            All systems operational
+          </div>
         </div>
       </div>
     </footer>
   );
 }
 
-/* ==========================================================================
- *  APPLICATION — SwipeGymApp
- * ========================================================================== */
+/* ────────────────────────────────────────────────────────────── */
+/*  PAGE                                                          */
+/* ────────────────────────────────────────────────────────────── */
 
-type Challenge = (typeof MOCK_DATA)[number];
-type InteractionState = "idle" | "swiping" | "revealBug" | "mcq" | "result";
-type SwipeOutcome = null | "approved" | "rejected";
-
-function SwipeGymApp() {
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [xp, setXp] = useState(450);
-  const [streak] = useState(12);
-  const [interactionState, setInteractionState] = useState<InteractionState>("idle");
-  const [swipeOutcome, setSwipeOutcome] = useState<SwipeOutcome>(null);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [particles, setParticles] = useState<number[]>([]);
-
-  const challenge = MOCK_DATA[currentCardIndex % MOCK_DATA.length];
-  const level = 4;
-  const xpForLevel = 1000;
-  const xpProgress = Math.min(100, ((xp % xpForLevel) / xpForLevel) * 100);
-
-  const handleSwipe = (dir: "left" | "right") => {
-    if (dir === "right") {
-      // approve = wrong (there's a bug)
-      setSwipeOutcome("approved");
-      setInteractionState("revealBug");
-      setXp((x) => Math.max(0, x - 5));
-    } else {
-      // reject = correct → open MCQ
-      setSwipeOutcome("rejected");
-      setInteractionState("mcq");
-    }
-  };
-
-  const handleAnswer = (id: string) => {
-    setSelectedOption(id);
-    if (id === challenge.correct_option_id) {
-      setXp((x) => x + 25);
-      const burst = Array.from({ length: 14 }, (_, i) => i + Date.now());
-      setParticles(burst);
-      setTimeout(() => setParticles([]), 900);
-    } else {
-      setXp((x) => Math.max(0, x - 5));
-    }
-    setInteractionState("result");
-  };
-
-  const nextCard = () => {
-    setSelectedOption(null);
-    setSwipeOutcome(null);
-    setInteractionState("idle");
-    setCurrentCardIndex((i) => i + 1);
-  };
-
+function LandingPage() {
   return (
-    <div className="relative mx-auto flex h-[760px] w-full max-w-md flex-col overflow-hidden rounded-[2.25rem] border border-white/10 bg-black text-gray-100 shadow-2xl">
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between border-b border-white/5 bg-black/60 px-5 py-4 backdrop-blur">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="grid h-6 w-6 place-items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 font-mono text-[10px] font-semibold text-emerald-400">
-              L{level}
-            </span>
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium text-white">Senior Auditor</div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-gray-500">
-                {xp} XP
-              </div>
-            </div>
-          </div>
-          <div className="mt-2 h-1 w-40 overflow-hidden rounded-full bg-white/10">
-            <motion.div
-              className="h-full rounded-full bg-emerald-400"
-              initial={false}
-              animate={{ width: `${xpProgress}%` }}
-              transition={{ type: "spring", stiffness: 140, damping: 22 }}
-              style={{ boxShadow: "0 0 12px rgba(16,185,129,0.5)" }}
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-            <Flame className="h-3.5 w-3.5 text-orange-400" />
-            <span className="font-mono text-xs font-semibold text-white">{streak}</span>
-          </div>
-          <button
-            aria-label="Settings"
-            className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.03] text-gray-400 transition-colors hover:text-white"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Concept pill */}
-      <div className="flex justify-center py-4">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs">
-          <Target className="h-3 w-3 text-emerald-400" />
-          <span className="font-mono text-gray-300">🎯 {challenge.concept_id}</span>
-        </div>
-      </div>
-
-      {/* Card stack area */}
-      <div className="relative flex-1 px-4">
-        {/* particles */}
-        <AnimatePresence>
-          {particles.length > 0 && (
-            <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center">
-              {particles.map((p, i) => {
-                const angle = (i / particles.length) * Math.PI * 2;
-                const dist = 90 + Math.random() * 60;
-                return (
-                  <motion.span
-                    key={p}
-                    initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                    animate={{
-                      opacity: 0,
-                      x: Math.cos(angle) * dist,
-                      y: Math.sin(angle) * dist,
-                      scale: 0.4,
-                    }}
-                    transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute h-1.5 w-1.5 rounded-full bg-emerald-400"
-                    style={{ boxShadow: "0 0 8px rgba(16,185,129,0.9)" }}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Ghost background card */}
-        <div className="absolute inset-x-4 top-2 h-[calc(100%-16px)] scale-[0.96] rounded-2xl border border-white/5 bg-white/[0.02]" />
-
-        <AnimatePresence mode="wait">
-          {interactionState === "idle" || interactionState === "swiping" ? (
-            <SwipeableCard
-              key={challenge.id}
-              challenge={challenge}
-              onSwipe={handleSwipe}
-            />
-          ) : (
-            <motion.div
-              key={challenge.id + "-static"}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35 }}
-              className="relative h-full"
-            >
-              <TerminalCard
-                challenge={challenge}
-                highlightBug={interactionState === "revealBug" || (interactionState === "result" && swipeOutcome === "approved")}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Bottom action bar */}
-      <div className="relative z-10 flex items-center justify-center gap-6 border-t border-white/5 bg-black/60 py-5 backdrop-blur">
-        <ActionButton
-          label="Reject"
-          color="red"
-          onClick={() => interactionState === "idle" && handleSwipe("left")}
-          disabled={interactionState !== "idle"}
-        >
-          <X className="h-6 w-6" />
-        </ActionButton>
-        <div className="font-mono text-[10px] uppercase tracking-widest text-gray-600">
-          swipe · or tap
-        </div>
-        <ActionButton
-          label="Approve"
-          color="green"
-          onClick={() => interactionState === "idle" && handleSwipe("right")}
-          disabled={interactionState !== "idle"}
-        >
-          <Check className="h-6 w-6" />
-        </ActionButton>
-      </div>
-
-      {/* Reveal Bug overlay (wrong approve) */}
-      <AnimatePresence>
-        {interactionState === "revealBug" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-40 flex flex-col items-center justify-end bg-black/70 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ y: 40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 40, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="w-full rounded-t-3xl border-t border-red-500/30 bg-[#0a0a0a] p-6"
-            >
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/10" />
-              <div className="flex items-center gap-2 text-red-400">
-                <X className="h-4 w-4" />
-                <span className="font-mono text-xs uppercase tracking-widest">
-                  Missed bug · line {challenge.bug_line}
-                </span>
-              </div>
-              <h3 className="mt-2 text-lg font-semibold tracking-tight text-white">
-                You approved a defect.
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-400">
-                {challenge.explanation}
-              </p>
-              <div className="mt-3 font-mono text-xs text-red-400">−5 XP</div>
-              <button
-                onClick={nextCard}
-                className="mt-5 w-full rounded-md bg-white px-4 py-2.5 text-sm font-medium text-black transition-colors hover:bg-gray-200"
-              >
-                Next challenge
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* MCQ bottom sheet */}
-      <AnimatePresence>
-        {(interactionState === "mcq" || interactionState === "result") && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-40 flex flex-col justify-end bg-black/60 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ y: 80, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 80, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 30 }}
-              className="w-full rounded-t-3xl border-t border-white/10 bg-[#0a0a0a] p-6"
-            >
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/10" />
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-emerald-400">
-                  Rejected · explain why
-                </span>
-              </div>
-              <h3 className="mt-2 text-base font-semibold leading-snug text-white">
-                {challenge.mcq_question}
-              </h3>
-
-              <div className="mt-4 space-y-2">
-                {challenge.options.map((opt) => {
-                  const isCorrect = opt.id === challenge.correct_option_id;
-                  const isSelected = selectedOption === opt.id;
-                  const revealed = interactionState === "result";
-                  const base =
-                    "w-full rounded-lg border px-4 py-3 text-left text-sm transition-all";
-                  let cls = "border-white/10 bg-white/[0.02] text-gray-200 hover:border-white/25 hover:bg-white/[0.05]";
-                  if (revealed) {
-                    if (isCorrect) {
-                      cls = "border-emerald-500/50 bg-emerald-500/10 text-emerald-100";
-                    } else if (isSelected) {
-                      cls = "border-red-500/50 bg-red-500/10 text-red-100";
-                    } else {
-                      cls = "border-white/10 bg-white/[0.02] text-gray-500";
-                    }
-                  }
-                  return (
-                    <motion.button
-                      key={opt.id}
-                      whileHover={!revealed ? { x: 2 } : undefined}
-                      whileTap={!revealed ? { scale: 0.99 } : undefined}
-                      disabled={revealed}
-                      onClick={() => handleAnswer(opt.id)}
-                      className={`${base} ${cls}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={
-                            "grid h-6 w-6 flex-none place-items-center rounded-md border font-mono text-[11px] " +
-                            (revealed && isCorrect
-                              ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300"
-                              : revealed && isSelected
-                              ? "border-red-500/50 bg-red-500/20 text-red-300"
-                              : "border-white/10 bg-white/[0.03] text-gray-400")
-                          }
-                        >
-                          {opt.id}
-                        </span>
-                        <span className="leading-relaxed">{opt.text}</span>
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
-
-              <AnimatePresence>
-                {interactionState === "result" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="mt-5 rounded-lg border border-white/10 bg-black/60 p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={
-                          "font-mono text-xs uppercase tracking-widest " +
-                          (selectedOption === challenge.correct_option_id
-                            ? "text-emerald-400"
-                            : "text-red-400")
-                        }
-                      >
-                        {selectedOption === challenge.correct_option_id
-                          ? "Correct · +25 XP"
-                          : "Incorrect · −5 XP"}
-                      </span>
-                      <span className="font-mono text-[10px] text-gray-500">
-                        line {challenge.bug_line}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-gray-300">
-                      {challenge.explanation}
-                    </p>
-                    <button
-                      onClick={nextCard}
-                      className="mt-4 w-full rounded-md bg-white px-4 py-2.5 text-sm font-medium text-black transition-colors hover:bg-gray-200"
-                    >
-                      Next challenge
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="relative min-h-screen bg-black text-white antialiased">
+      <Nav />
+      <Hero />
+      <LogoStrip />
+      <Pillars />
+      <AssessmentDemo />
+      <ActivityTypes />
+      <SwipeDemo />
+      <SkillLibrary />
+      <DashboardShowcase />
+      <Testimonials />
+      <Pricing />
+      <FAQ />
+      <CTA />
+      <Footer />
     </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Swipeable card                                                            */
-/* -------------------------------------------------------------------------- */
-
-function SwipeableCard({
-  challenge,
-  onSwipe,
-}: {
-  challenge: Challenge;
-  onSwipe: (dir: "left" | "right") => void;
-}) {
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 0, 200], [-12, 0, 12]);
-  const approveOpacity = useTransform(x, [0, 120], [0, 1]);
-  const rejectOpacity = useTransform(x, [-120, 0], [1, 0]);
-
-  return (
-    <motion.div
-      drag="x"
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.6}
-      style={{ x, rotate, touchAction: "none" }}
-      onDragEnd={(_, info) => {
-        if (info.offset.x > 100) onSwipe("right");
-        else if (info.offset.x < -100) onSwipe("left");
-      }}
-      whileTap={{ cursor: "grabbing" }}
-      initial={{ opacity: 0, y: 12, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.2 } }}
-      transition={{ type: "spring", stiffness: 260, damping: 26 }}
-      className="relative h-full cursor-grab"
-    >
-      <TerminalCard challenge={challenge} />
-
-      {/* Approve overlay */}
-      <motion.div
-        style={{ opacity: approveOpacity }}
-        className="pointer-events-none absolute inset-0 flex items-start justify-start rounded-2xl border-2 border-emerald-500/60 bg-emerald-500/[0.08] p-6"
-      >
-        <span className="rotate-[-8deg] rounded-md border-2 border-emerald-400 bg-black/60 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-emerald-400">
-          LGTM
-        </span>
-      </motion.div>
-      {/* Reject overlay */}
-      <motion.div
-        style={{ opacity: rejectOpacity }}
-        className="pointer-events-none absolute inset-0 flex items-start justify-end rounded-2xl border-2 border-red-500/60 bg-red-500/[0.08] p-6"
-      >
-        <span className="rotate-[8deg] rounded-md border-2 border-red-400 bg-black/60 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-red-400">
-          Reject · Bug
-        </span>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Terminal card with syntax highlighting                                     */
-/* -------------------------------------------------------------------------- */
-
-function TerminalCard({
-  challenge,
-  highlightBug = false,
-  compact = false,
-}: {
-  challenge: Challenge;
-  highlightBug?: boolean;
-  compact?: boolean;
-}) {
-  const lines = useMemo(
-    () => challenge.code_snippet.split("\n"),
-    [challenge.code_snippet],
-  );
-  return (
-    <div
-      className={
-        "flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)]"
-      }
-    >
-      {/* window chrome */}
-      <div className="flex items-center gap-2 border-b border-white/5 bg-black/60 px-4 py-2.5">
-        <div className="flex gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        </div>
-        <div className="ml-2 font-mono text-[11px] text-gray-500">server.js</div>
-        <div className="ml-auto flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-gray-600">
-          <span className="rounded border border-white/10 bg-white/[0.03] px-1.5 py-0.5">
-            {challenge.language}
-          </span>
-          <span className="rounded border border-white/10 bg-white/[0.03] px-1.5 py-0.5">
-            {challenge.difficulty}
-          </span>
-        </div>
-      </div>
-
-      {/* code */}
-      <div className={"flex-1 overflow-auto " + (compact ? "" : "")}>
-        <pre className="min-h-full font-mono text-[13px] leading-6">
-          {lines.map((line, i) => {
-            const lineNo = i + 1;
-            const isBug = highlightBug && lineNo === challenge.bug_line;
-            return (
-              <div
-                key={i}
-                className={
-                  "flex px-3 " +
-                  (isBug ? "bg-red-500/10" : "")
-                }
-              >
-                <span
-                  className={
-                    "w-8 flex-none select-none text-right pr-3 " +
-                    (isBug ? "text-red-400" : "text-gray-600")
-                  }
-                >
-                  {lineNo}
-                </span>
-                <span className="flex-1 whitespace-pre-wrap break-words">
-                  <Highlighted code={line || " "} />
-                </span>
-              </div>
-            );
-          })}
-        </pre>
-      </div>
-
-      {/* footer */}
-      <div className="flex items-center justify-between border-t border-white/5 bg-black/60 px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-gray-500">
-        <span>diff · pr #{842 + challenge.code_snippet.length % 100}</span>
-        <span className="flex items-center gap-1 text-gray-400">
-          <Sparkles className="h-3 w-3 text-emerald-400" />
-          senior review
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ------ minimal, dependency-free JS syntax highlighter ------ */
-
-const JS_KEYWORDS = new Set([
-  "const","let","var","function","return","if","else","for","while","await","async",
-  "new","class","extends","import","from","export","default","try","catch","finally",
-  "throw","typeof","instanceof","in","of","break","continue","switch","case","null",
-  "undefined","true","false","this","void","delete","yield","do",
-]);
-
-function Highlighted({ code }: { code: string }) {
-  // Tokenize a single line. Order matters.
-  const tokens: { t: string; c: string }[] = [];
-  const regex =
-    /(\/\/[^\n]*)|(`[^`]*`|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_$][A-Za-z0-9_$]*\b)|(\s+)|([{}[\]().,;:=+\-*/<>!?&|^%~]+)|([^\s])/g;
-  let m: RegExpExecArray | null;
-  while ((m = regex.exec(code)) !== null) {
-    const [full, comment, str, num, ident, ws, punct, other] = m;
-    if (comment) tokens.push({ t: full, c: "text-gray-500 italic" });
-    else if (str) tokens.push({ t: full, c: "text-emerald-300" });
-    else if (num) tokens.push({ t: full, c: "text-orange-300" });
-    else if (ident) {
-      if (JS_KEYWORDS.has(ident)) tokens.push({ t: full, c: "text-blue-400" });
-      else if (/^[A-Z]/.test(ident)) tokens.push({ t: full, c: "text-emerald-400" });
-      else tokens.push({ t: full, c: "text-gray-200" });
-    } else if (ws) tokens.push({ t: full, c: "" });
-    else if (punct) tokens.push({ t: full, c: "text-gray-500" });
-    else tokens.push({ t: other, c: "text-gray-200" });
-  }
-  return (
-    <>
-      {tokens.map((tok, i) => (
-        <span key={i} className={tok.c}>
-          {tok.t}
-        </span>
-      ))}
-    </>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Action button                                                             */
-/* -------------------------------------------------------------------------- */
-
-function ActionButton({
-  children,
-  label,
-  color,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode;
-  label: string;
-  color: "red" | "green";
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  const styles =
-    color === "green"
-      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/70 hover:bg-emerald-500/20"
-      : "border-red-500/40 bg-red-500/10 text-red-300 hover:border-red-400/70 hover:bg-red-500/20";
-  return (
-    <motion.button
-      aria-label={label}
-      onClick={onClick}
-      disabled={disabled}
-      whileHover={disabled ? undefined : { scale: 1.06 }}
-      whileTap={disabled ? undefined : { scale: 0.92 }}
-      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-      className={
-        "grid h-14 w-14 place-items-center rounded-full border transition-colors disabled:opacity-40 " +
-        styles
-      }
-    >
-      {children}
-    </motion.button>
   );
 }
