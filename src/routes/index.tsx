@@ -34,17 +34,17 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Axiom — Adaptive Learning Platform for Engineers" },
+      { title: "MeisterUp — Adaptive Learning Platform for Engineers" },
       {
         name: "description",
         content:
-          "Axiom is an AI-native adaptive learning platform. It models what you already know, finds your gaps, and teaches the right concept next — for any technical skill.",
+          "An AI-native adaptive learning platform that models what you already know, finds your gaps, and teaches the right concept next, for any technical skill.",
       },
-      { property: "og:title", content: "Axiom — Adaptive Learning for Engineers" },
+      { property: "og:title", content: "MeisterUp — Adaptive Learning Platform for Engineers" },
       {
         property: "og:description",
         content:
-          "Skip what you know. Master what you don't. A personalized curriculum, generated for every learner.",
+          "An AI-native adaptive learning platform that models what you already know, finds your gaps, and teaches the right concept next, for any technical skill.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
