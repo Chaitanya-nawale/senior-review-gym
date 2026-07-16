@@ -1,4 +1,8 @@
-# CLAUDE.md — Developer Guidelines & Project Reference
+---
+trigger: always_on
+---
+
+# agent.md — Developer Guidelines & Project Reference
 
 ## Project Overview
 
