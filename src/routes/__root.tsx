@@ -78,15 +78,35 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "MeisterUp — Adaptive Learning Platform for Engineers" },
-      { name: "description", content: "An AI-native adaptive learning platform that models what you already know, finds your gaps, and teaches the right concept next, for any technical skill." },
+      {
+        name: "description",
+        content:
+          "An AI-native adaptive learning platform that models what you already know, finds your gaps, and teaches the right concept next, for any technical skill.",
+      },
       { property: "og:title", content: "MeisterUp — Adaptive Learning Platform for Engineers" },
-      { property: "og:description", content: "An AI-native adaptive learning platform that models what you already know, finds your gaps, and teaches the right concept next, for any technical skill." },
+      {
+        property: "og:description",
+        content:
+          "An AI-native adaptive learning platform that models what you already know, finds your gaps, and teaches the right concept next, for any technical skill.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "MeisterUp — Adaptive Learning Platform for Engineers" },
-      { name: "twitter:description", content: "An AI-native adaptive learning platform that models what you already know, finds your gaps, and teaches the right concept next, for any technical skill." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6863e090-5446-48e3-b971-d3b0eb5bd8b0/id-preview-9cf1674b--ae33c893-d9f5-4c1b-9e6b-2194fe6b1a32.lovable.app-1784077739265.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6863e090-5446-48e3-b971-d3b0eb5bd8b0/id-preview-9cf1674b--ae33c893-d9f5-4c1b-9e6b-2194fe6b1a32.lovable.app-1784077739265.png" },
+      {
+        name: "twitter:description",
+        content:
+          "An AI-native adaptive learning platform that models what you already know, finds your gaps, and teaches the right concept next, for any technical skill.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6863e090-5446-48e3-b971-d3b0eb5bd8b0/id-preview-9cf1674b--ae33c893-d9f5-4c1b-9e6b-2194fe6b1a32.lovable.app-1784077739265.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6863e090-5446-48e3-b971-d3b0eb5bd8b0/id-preview-9cf1674b--ae33c893-d9f5-4c1b-9e6b-2194fe6b1a32.lovable.app-1784077739265.png",
+      },
     ],
     links: [
       {
@@ -95,7 +115,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -118,13 +141,17 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { AuthProvider } from "../lib/auth";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

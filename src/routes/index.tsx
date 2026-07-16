@@ -1,11 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useTransform,
-} from "framer-motion";
+import { useAuth } from "../lib/auth";
+import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -79,8 +75,7 @@ function GridBg() {
         backgroundImage:
           "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)",
         backgroundSize: "56px 56px",
-        maskImage:
-          "radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 100%)",
+        maskImage: "radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 100%)",
       }}
     />
   );
@@ -90,10 +85,7 @@ function GlowOrb({ className }: { className?: string }) {
   return (
     <div
       aria-hidden
-      className={cn(
-        "pointer-events-none absolute rounded-full blur-[120px] opacity-40",
-        className,
-      )}
+      className={cn("pointer-events-none absolute rounded-full blur-[120px] opacity-40", className)}
     />
   );
 }
@@ -103,6 +95,7 @@ function GlowOrb({ className }: { className?: string }) {
 /* ────────────────────────────────────────────────────────────── */
 
 function Nav() {
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 8);
@@ -114,17 +107,13 @@ function Nav() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-        scrolled
-          ? "backdrop-blur-xl bg-black/60 border-b border-white/[0.06]"
-          : "bg-transparent",
+        scrolled ? "backdrop-blur-xl bg-black/60 border-b border-white/[0.06]" : "bg-transparent",
       )}
     >
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <a href="#top" className="group flex items-center gap-2">
           <img src="/favicon.ico" alt="MeisterUp Logo" className="h-6 w-6 object-contain" />
-          <span className="text-[15px] font-semibold tracking-tight text-white">
-            MeisterUp
-          </span>
+          <span className="text-[15px] font-semibold tracking-tight text-white">MeisterUp</span>
           <span className="ml-1 rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white/50">
             Beta
           </span>
@@ -146,19 +135,31 @@ function Nav() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Link
-            to="/signin"
-            className="hidden text-[13px] font-medium text-white/70 hover:text-white sm:block"
-          >
-            Sign in
-          </Link>
-          <a
-            href="#demo"
-            className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[13px] font-semibold text-black transition-all hover:bg-white/90"
-          >
-            Start free
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-          </a>
+          {user ? (
+            <Link
+              to="/dashboard"
+              className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[13px] font-semibold text-black transition-all hover:bg-white/90"
+            >
+              Go to Dashboard
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/signin"
+                className="hidden text-[13px] font-medium text-white/70 hover:text-white sm:block"
+              >
+                Sign in
+              </Link>
+              <a
+                href="#demo"
+                className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[13px] font-semibold text-black transition-all hover:bg-white/90"
+              >
+                Start free
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </a>
+            </>
+          )}
         </div>
       </div>
     </header>
@@ -198,9 +199,9 @@ function Hero() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-white/60">
-            MeisterUp models your existing knowledge, finds the exact gaps that
-            matter, and generates a personalized curriculum for any technical
-            skill — from Rust to system design to prompt engineering.
+            MeisterUp models your existing knowledge, finds the exact gaps that matter, and
+            generates a personalized curriculum for any technical skill — from Rust to system design
+            to prompt engineering.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -271,9 +272,7 @@ function HeroCanvas() {
                 <div key={s.k}>
                   <div className="flex items-baseline justify-between text-[11px]">
                     <span className="text-white/70">{s.k}</span>
-                    <span className="font-mono tabular-nums text-white/50">
-                      {s.v}%
-                    </span>
+                    <span className="font-mono tabular-nums text-white/50">{s.v}%</span>
                   </div>
                   <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/5">
                     <motion.div
@@ -291,12 +290,8 @@ function HeroCanvas() {
               <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-white/40">
                 <Brain className="h-3 w-3" /> Next best concept
               </div>
-              <div className="mt-1.5 text-[13px] font-semibold text-white">
-                List comprehensions
-              </div>
-              <div className="mt-0.5 text-[11px] text-white/50">
-                +12 mastery · 4 min est.
-              </div>
+              <div className="mt-1.5 text-[13px] font-semibold text-white">List comprehensions</div>
+              <div className="mt-0.5 text-[11px] text-white/50">+12 mastery · 4 min est.</div>
             </div>
           </div>
 
@@ -315,8 +310,7 @@ function HeroCanvas() {
             </div>
             <pre className="mt-3 overflow-hidden rounded-md border border-white/[0.06] bg-black/40 p-3 font-mono text-[11px] leading-relaxed text-white/80">
               <span className="text-fuchsia-300">[x*x</span>{" "}
-              <span className="text-cyan-300">for</span> x{" "}
-              <span className="text-cyan-300">in</span>{" "}
+              <span className="text-cyan-300">for</span> x <span className="text-cyan-300">in</span>{" "}
               <span className="text-emerald-300">range</span>(5){" "}
               <span className="text-cyan-300">if</span> x % 2
               <span className="text-fuchsia-300">]</span>
@@ -341,8 +335,8 @@ function HeroCanvas() {
               ))}
             </div>
             <div className="mt-4 rounded-md border border-white/[0.06] bg-white/[0.02] p-2.5 text-[11px] text-white/50">
-              <span className="text-white/70">Reasoning:</span> range(5) filtered
-              by odd → 1, 3 → squared.
+              <span className="text-white/70">Reasoning:</span> range(5) filtered by odd → 1, 3 →
+              squared.
             </div>
           </div>
         </div>
@@ -399,10 +393,10 @@ function KnowledgeGraph() {
     s === "mastered"
       ? "#34d399"
       : s === "active"
-      ? "#a78bfa"
-      : s === "next"
-      ? "#22d3ee"
-      : "#3f3f46";
+        ? "#a78bfa"
+        : s === "next"
+          ? "#22d3ee"
+          : "#3f3f46";
 
   return (
     <svg viewBox="0 0 560 420" className="h-full w-full">
@@ -415,8 +409,7 @@ function KnowledgeGraph() {
       {edges.map(([a, b], i) => {
         const A = byId[a];
         const B = byId[b];
-        const active =
-          A.state === "mastered" && (B.state === "mastered" || B.state === "active");
+        const active = A.state === "mastered" && (B.state === "mastered" || B.state === "active");
         return (
           <motion.line
             key={i}
@@ -455,14 +448,7 @@ function KnowledgeGraph() {
               />
             </>
           )}
-          <circle
-            cx={n.x}
-            cy={n.y}
-            r="8"
-            fill={colorFor(n.state)}
-            stroke="black"
-            strokeWidth="2"
-          />
+          <circle cx={n.x} cy={n.y} r="8" fill={colorFor(n.state)} stroke="black" strokeWidth="2" />
           <text
             x={n.x}
             y={n.y + 22}
@@ -485,15 +471,7 @@ function KnowledgeGraph() {
 /* ────────────────────────────────────────────────────────────── */
 
 function LogoStrip() {
-  const logos = [
-    "STRIPE",
-    "VERCEL",
-    "LINEAR",
-    "ANTHROPIC",
-    "SUPABASE",
-    "NOTION",
-    "RAMP",
-  ];
+  const logos = ["STRIPE", "VERCEL", "LINEAR", "ANTHROPIC", "SUPABASE", "NOTION", "RAMP"];
   return (
     <section className="border-y border-white/[0.06] bg-black">
       <div className="mx-auto max-w-7xl px-6 py-10">
@@ -553,8 +531,8 @@ function Pillars() {
             <span className="text-white/40"> An engine.</span>
           </h2>
           <p className="mt-4 text-[16px] text-white/60">
-            Four systems working in concert — so the platform can teach a Rust
-            veteran and a Python beginner from the same skill tree.
+            Four systems working in concert — so the platform can teach a Rust veteran and a Python
+            beginner from the same skill tree.
           </p>
         </div>
 
@@ -571,12 +549,8 @@ function Pillars() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
                 <it.icon className="h-4.5 w-4.5 text-white/80" />
               </div>
-              <div className="mt-5 text-[15px] font-semibold text-white">
-                {it.title}
-              </div>
-              <p className="mt-2 text-[13px] leading-relaxed text-white/55">
-                {it.body}
-              </p>
+              <div className="mt-5 text-[15px] font-semibold text-white">{it.title}</div>
+              <p className="mt-2 text-[13px] leading-relaxed text-white/55">{it.body}</p>
               <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
             </motion.div>
           ))}
@@ -615,10 +589,7 @@ function AssessmentDemo() {
   ];
   const [step, setStep] = useState(0);
   useEffect(() => {
-    const id = setInterval(
-      () => setStep((s) => (s + 1) % steps.length),
-      3800,
-    );
+    const id = setInterval(() => setStep((s) => (s + 1) % steps.length), 3800);
     return () => clearInterval(id);
   }, []);
   const mastery = [22, 41, 43, 68][step];
@@ -634,10 +605,9 @@ function AssessmentDemo() {
             <span className="text-white/40">A curriculum for one.</span>
           </h2>
           <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-white/60">
-            Instead of a 40-question exam, MeisterUp asks a handful of well-chosen
-            questions. Each answer updates a probability distribution over
-            every concept in the graph — collapsing weeks of onboarding into
-            under a minute.
+            Instead of a 40-question exam, MeisterUp asks a handful of well-chosen questions. Each
+            answer updates a probability distribution over every concept in the graph — collapsing
+            weeks of onboarding into under a minute.
           </p>
           <ul className="mt-8 space-y-3">
             {[
@@ -711,9 +681,7 @@ function AssessmentDemo() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-widest text-white/40">
-        {label}
-      </div>
+      <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
       <div className="mt-1 font-mono text-[16px] font-semibold tabular-nums text-white">
         {value}
       </div>
@@ -727,12 +695,36 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function ActivityTypes() {
   const types = [
-    { icon: Command, name: "Multiple choice", desc: "Rapid concept checks with distractors mined from real misconceptions." },
-    { icon: Terminal, name: "Interactive simulation", desc: "Run code in a sandbox. Trace state. Watch the runtime think." },
-    { icon: GitBranch, name: "Error detection", desc: "Swipe-review production code. Spot bugs, security issues, and hallucinations." },
-    { icon: Layers, name: "Ordering & sequencing", desc: "Drag steps into the correct order — request lifecycle, deployment flow." },
-    { icon: Cpu, name: "Scenario decisions", desc: "Design under constraint. Justify tradeoffs. Get graded on reasoning." },
-    { icon: Sparkles, name: "Explain-back", desc: "Teach the concept in your own words. Reviewed for accuracy and depth." },
+    {
+      icon: Command,
+      name: "Multiple choice",
+      desc: "Rapid concept checks with distractors mined from real misconceptions.",
+    },
+    {
+      icon: Terminal,
+      name: "Interactive simulation",
+      desc: "Run code in a sandbox. Trace state. Watch the runtime think.",
+    },
+    {
+      icon: GitBranch,
+      name: "Error detection",
+      desc: "Swipe-review production code. Spot bugs, security issues, and hallucinations.",
+    },
+    {
+      icon: Layers,
+      name: "Ordering & sequencing",
+      desc: "Drag steps into the correct order — request lifecycle, deployment flow.",
+    },
+    {
+      icon: Cpu,
+      name: "Scenario decisions",
+      desc: "Design under constraint. Justify tradeoffs. Get graded on reasoning.",
+    },
+    {
+      icon: Sparkles,
+      name: "Explain-back",
+      desc: "Teach the concept in your own words. Reviewed for accuracy and depth.",
+    },
   ];
   return (
     <section className="relative border-b border-white/[0.06] py-28">
@@ -743,8 +735,8 @@ function ActivityTypes() {
             Ten ways to prove you know it.
           </h2>
           <p className="mt-4 text-[16px] text-white/60">
-            Different concepts require different interactions. MeisterUp picks the
-            right one — and grades reasoning, not just answers.
+            Different concepts require different interactions. MeisterUp picks the right one — and
+            grades reasoning, not just answers.
           </p>
         </div>
 
@@ -762,13 +754,9 @@ function ActivityTypes() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
                   <t.icon className="h-4 w-4 text-white/80" />
                 </div>
-                <div className="text-[14px] font-semibold text-white">
-                  {t.name}
-                </div>
+                <div className="text-[14px] font-semibold text-white">{t.name}</div>
               </div>
-              <p className="mt-3 text-[13px] leading-relaxed text-white/55">
-                {t.desc}
-              </p>
+              <p className="mt-3 text-[13px] leading-relaxed text-white/55">{t.desc}</p>
               <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/[0.03] opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
             </motion.div>
           ))}
@@ -795,8 +783,7 @@ const SWIPE_CARDS = [
 }`,
     bad: true,
     concept: "JWT verification",
-    why:
-      "jwt.decode() does not check the signature. Any forged token with valid JSON is accepted. Use jwt.verify() with the shared secret.",
+    why: "jwt.decode() does not check the signature. Any forged token with valid JSON is accepted. Use jwt.verify() with the shared secret.",
   },
   {
     title: "React memoization — PR #911",
@@ -809,8 +796,7 @@ const SWIPE_CARDS = [
 <Row item={item} onSelect={id => setSelected(id)} />`,
     bad: true,
     concept: "Stable callbacks",
-    why:
-      "memo() bails out because onSelect is a new function every parent render. Wrap it in useCallback or hoist it above the render.",
+    why: "memo() bails out because onSelect is a new function every parent render. Wrap it in useCallback or hoist it above the render.",
   },
   {
     title: "Postgres index — migration 0043",
@@ -820,14 +806,16 @@ const SWIPE_CARDS = [
   WHERE status IN ('paid', 'refunded');`,
     bad: false,
     concept: "Partial composite index",
-    why:
-      "Correct. Composite + partial index targets the hot query path without indexing dead rows. CONCURRENTLY avoids table locks.",
+    why: "Correct. Composite + partial index targets the hot query path without indexing dead rows. CONCURRENTLY avoids table locks.",
   },
 ];
 
 function SwipeDemo() {
   const [i, setI] = useState(0);
-  const [feedback, setFeedback] = useState<null | { correct: boolean; card: typeof SWIPE_CARDS[number] }>(null);
+  const [feedback, setFeedback] = useState<null | {
+    correct: boolean;
+    card: (typeof SWIPE_CARDS)[number];
+  }>(null);
   const [streak, setStreak] = useState(0);
   const [xp, setXp] = useState(120);
   const [prevStreak, setPrevStreak] = useState(0);
@@ -879,9 +867,9 @@ function SwipeDemo() {
             <span className="text-white/40">Build engineering judgment.</span>
           </h2>
           <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-white/60">
-            A live sample of one activity type — swipe-based code review, drawn
-            from anonymized production PRs. Reasoning matters more than the
-            swipe: after each card, MeisterUp asks <em>why</em>.
+            A live sample of one activity type — swipe-based code review, drawn from anonymized
+            production PRs. Reasoning matters more than the swipe: after each card, MeisterUp asks{" "}
+            <em>why</em>.
           </p>
 
           <div className="mt-8 grid max-w-md grid-cols-3 gap-3">
@@ -920,7 +908,11 @@ function SwipeDemo() {
                 style={{ x, rotate, opacity }}
                 className="absolute inset-0 cursor-grab active:cursor-grabbing"
               >
-                <ReviewCard card={card} approveOpacity={approveOpacity} rejectOpacity={rejectOpacity} />
+                <ReviewCard
+                  card={card}
+                  approveOpacity={approveOpacity}
+                  rejectOpacity={rejectOpacity}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -941,11 +933,7 @@ function SwipeDemo() {
                       : "bg-rose-400/10 text-rose-300",
                   )}
                 >
-                  {feedback.correct ? (
-                    <Check className="h-3 w-3" />
-                  ) : (
-                    <X className="h-3 w-3" />
-                  )}
+                  {feedback.correct ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                   {feedback.correct ? "Correct call" : "Not quite"}
                 </div>
                 <div className="mt-4 text-[15px] font-semibold text-white">
@@ -1020,9 +1008,7 @@ function ReviewCard({
       <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
         <div className="flex items-center gap-2">
           <GitBranch className="h-3.5 w-3.5 text-white/50" />
-          <span className="text-[12px] font-medium text-white/80">
-            {card.title}
-          </span>
+          <span className="text-[12px] font-medium text-white/80">{card.title}</span>
         </div>
         <span className="rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] uppercase text-white/50">
           {card.lang}
@@ -1053,7 +1039,8 @@ function ReviewCard({
 
 /* Minimal syntax highlighter — keywords / strings / comments */
 function highlight(code: string) {
-  const KW = /\b(const|let|var|function|return|if|else|for|while|export|import|from|new|class|extends|await|async|try|catch|throw|CREATE|INDEX|ON|WHERE|IN|CONCURRENTLY|DESC)\b/g;
+  const KW =
+    /\b(const|let|var|function|return|if|else|for|while|export|import|from|new|class|extends|await|async|try|catch|throw|CREATE|INDEX|ON|WHERE|IN|CONCURRENTLY|DESC)\b/g;
   const STR = /(["'`])(?:\\.|(?!\1).)*\1/g;
   const CMT = /(\/\/[^\n]*|--[^\n]*)/g;
   const NUM = /\b\d+\b/g;
@@ -1106,9 +1093,7 @@ function StatCard({
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-white/40">
         <Icon className="h-3 w-3" /> {label}
       </div>
-      <div className="mt-1 font-mono text-[18px] font-semibold text-white">
-        {value}
-      </div>
+      <div className="mt-1 font-mono text-[18px] font-semibold text-white">{value}</div>
     </div>
   );
 }
@@ -1153,8 +1138,8 @@ function SkillLibrary() {
             </h2>
           </div>
           <p className="max-w-md text-[15px] text-white/60">
-            The knowledge graph works for languages, frameworks, systems, and
-            concepts. New skill trees ship weekly.
+            The knowledge graph works for languages, frameworks, systems, and concepts. New skill
+            trees ship weekly.
           </p>
         </div>
 
@@ -1177,12 +1162,8 @@ function SkillLibrary() {
               />
               <div className="relative flex items-center justify-between">
                 <div>
-                  <div className="text-[14px] font-semibold text-white">
-                    {s.name}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-white/50">
-                    {s.learners} learners
-                  </div>
+                  <div className="text-[14px] font-semibold text-white">{s.name}</div>
+                  <div className="mt-0.5 text-[11px] text-white/50">{s.learners} learners</div>
                 </div>
                 <ArrowUpRight className="h-4 w-4 text-white/30 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
               </div>
@@ -1208,8 +1189,8 @@ function DashboardShowcase() {
             A map of what you know.
           </h2>
           <p className="mt-4 text-[16px] text-white/60">
-            Forget "10 lessons completed." MeisterUp shows you mastery, retention,
-            velocity, and where to invest next.
+            Forget "10 lessons completed." MeisterUp shows you mastery, retention, velocity, and
+            where to invest next.
           </p>
         </div>
 
@@ -1219,9 +1200,7 @@ function DashboardShowcase() {
               <div className="text-[10px] uppercase tracking-widest text-white/40">
                 Current skill
               </div>
-              <div className="mt-1.5 text-[18px] font-semibold text-white">
-                Python
-              </div>
+              <div className="mt-1.5 text-[18px] font-semibold text-white">Python</div>
               <div className="mt-4 space-y-4">
                 <Metric label="Overall mastery" value="72%" />
                 <Metric label="Concepts mastered" value="41 / 68" />
@@ -1235,9 +1214,7 @@ function DashboardShowcase() {
                   Mastery over time
                 </div>
                 <div className="flex gap-1 text-[10px] text-white/40">
-                  <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-white/70">
-                    30d
-                  </span>
+                  <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-white/70">30d</span>
                   <span className="px-1.5 py-0.5">90d</span>
                   <span className="px-1.5 py-0.5">All</span>
                 </div>
@@ -1245,9 +1222,7 @@ function DashboardShowcase() {
               <MasteryChart />
             </div>
             <div className="col-span-3 p-5">
-              <div className="text-[10px] uppercase tracking-widest text-white/40">
-                Next up
-              </div>
+              <div className="text-[10px] uppercase tracking-widest text-white/40">Next up</div>
               <div className="mt-3 space-y-2.5">
                 {[
                   { c: "Context managers", m: "prereq mastered", t: "5 min" },
@@ -1258,9 +1233,7 @@ function DashboardShowcase() {
                     key={r.c}
                     className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3"
                   >
-                    <div className="text-[13px] font-medium text-white">
-                      {r.c}
-                    </div>
+                    <div className="text-[13px] font-medium text-white">{r.c}</div>
                     <div className="mt-1 flex items-center justify-between text-[11px] text-white/50">
                       <span>{r.m}</span>
                       <span className="font-mono">{r.t}</span>
@@ -1279,11 +1252,15 @@ function DashboardShowcase() {
               <div className="flex items-center gap-2 text-[10px] text-white/40">
                 <span>Weak</span>
                 <div className="flex gap-0.5">
-                  {["bg-rose-500/70", "bg-amber-400/70", "bg-yellow-300/70", "bg-lime-400/70", "bg-emerald-400/80"].map(
-                    (c) => (
-                      <div key={c} className={cn("h-2 w-4 rounded-sm", c)} />
-                    ),
-                  )}
+                  {[
+                    "bg-rose-500/70",
+                    "bg-amber-400/70",
+                    "bg-yellow-300/70",
+                    "bg-lime-400/70",
+                    "bg-emerald-400/80",
+                  ].map((c) => (
+                    <div key={c} className={cn("h-2 w-4 rounded-sm", c)} />
+                  ))}
                 </div>
                 <span>Mastered</span>
               </div>
@@ -1296,15 +1273,7 @@ function DashboardShowcase() {
   );
 }
 
-function Metric({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "emerald";
-}) {
+function Metric({ label, value, tone }: { label: string; value: string; tone?: "emerald" }) {
   return (
     <div>
       <div className="text-[11px] text-white/50">{label}</div>
@@ -1397,7 +1366,10 @@ function Heatmap() {
     return "bg-emerald-400/80";
   };
   return (
-    <div className="mt-4 grid grid-cols-24 gap-1" style={{ gridTemplateColumns: "repeat(24, minmax(0,1fr))" }}>
+    <div
+      className="mt-4 grid grid-cols-24 gap-1"
+      style={{ gridTemplateColumns: "repeat(24, minmax(0,1fr))" }}
+    >
       {cells.map((v, i) => (
         <div
           key={i}
@@ -1445,17 +1417,16 @@ function Testimonials() {
               transition={{ delay: i * 0.08 }}
               className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent p-7"
             >
-              <blockquote className="text-[15px] leading-relaxed text-white/85">
-                "{q.q}"
-              </blockquote>
+              <blockquote className="text-[15px] leading-relaxed text-white/85">"{q.q}"</blockquote>
               <figcaption className="mt-6 flex items-center gap-3 border-t border-white/[0.06] pt-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-white/20 to-white/5 text-[12px] font-semibold text-white">
-                  {q.a.split(" ").map((n) => n[0]).join("")}
+                  {q.a
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
                 </div>
                 <div>
-                  <div className="text-[13px] font-medium text-white">
-                    {q.a}
-                  </div>
+                  <div className="text-[13px] font-medium text-white">{q.a}</div>
                   <div className="text-[11px] text-white/50">{q.r}</div>
                 </div>
               </figcaption>
@@ -1550,24 +1521,15 @@ function Pricing() {
                   {p.tag}
                 </div>
               )}
-              <div className="text-[13px] font-medium text-white/60">
-                {p.name}
-              </div>
+              <div className="text-[13px] font-medium text-white/60">{p.name}</div>
               <div className="mt-3 flex items-baseline gap-1">
-                <div className="text-4xl font-semibold tracking-tight text-white">
-                  {p.price}
-                </div>
-                {p.per && (
-                  <div className="text-[13px] text-white/50">{p.per}</div>
-                )}
+                <div className="text-4xl font-semibold tracking-tight text-white">{p.price}</div>
+                {p.per && <div className="text-[13px] text-white/50">{p.per}</div>}
               </div>
               <p className="mt-2 text-[13px] text-white/55">{p.body}</p>
               <ul className="mt-6 flex-1 space-y-2.5">
                 {p.features.map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-start gap-2 text-[13px] text-white/75"
-                  >
+                  <li key={f} className="flex items-start gap-2 text-[13px] text-white/75">
                     <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />
                     {f}
                   </li>
@@ -1643,9 +1605,7 @@ function FAQ() {
                   onClick={() => setOpen(isOpen ? null : i)}
                   className="flex w-full items-center justify-between px-5 py-4 text-left"
                 >
-                  <span className="text-[14px] font-medium text-white">
-                    {f.q}
-                  </span>
+                  <span className="text-[14px] font-medium text-white">{f.q}</span>
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 text-white/40 transition-transform",
@@ -1694,8 +1654,8 @@ function CTA() {
           </span>
         </h2>
         <p className="mx-auto mt-5 max-w-md text-[16px] text-white/60">
-          Because it is. Take the 60-second assessment and see your first
-          personalized curriculum in under a minute.
+          Because it is. Take the 60-second assessment and see your first personalized curriculum in
+          under a minute.
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <a
@@ -1728,8 +1688,7 @@ function Footer() {
               <span className="text-[15px] font-semibold text-white">MeisterUp</span>
             </div>
             <p className="mt-4 max-w-xs text-[12px] leading-relaxed text-white/50">
-              The adaptive learning platform for engineers. Built for the way
-              you actually learn.
+              The adaptive learning platform for engineers. Built for the way you actually learn.
             </p>
             <div className="mt-5 flex items-center gap-3">
               <a href="#" className="text-white/40 hover:text-white">
@@ -1761,10 +1720,7 @@ function Footer() {
               <ul className="mt-4 space-y-2.5">
                 {col.l.map((i) => (
                   <li key={i}>
-                    <a
-                      href="#"
-                      className="text-[13px] text-white/60 hover:text-white"
-                    >
+                    <a href="#" className="text-[13px] text-white/60 hover:text-white">
                       {i}
                     </a>
                   </li>

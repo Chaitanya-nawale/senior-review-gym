@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -14,6 +14,7 @@ import {
   Flame,
   GitBranch,
   Layers,
+  Loader2,
   LogOut,
   Play,
   Settings,
@@ -24,6 +25,7 @@ import {
   User,
   Zap,
 } from "lucide-react";
+import { useAuth } from "../lib/auth";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -52,40 +54,43 @@ function cn(...c: (string | false | undefined | null)[]) {
 /* ────────────────────────────────────────────────────────────── */
 
 function DashboardNav() {
+  const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const name = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Developer";
+  const initial = name.charAt(0).toUpperCase();
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await signOut();
+    navigate({ to: "/" });
+  };
+
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="group flex items-center gap-2">
-          <img
-            src="/favicon.ico"
-            alt="MeisterUp Logo"
-            className="h-6 w-6 object-contain"
-          />
-          <span className="text-[15px] font-semibold tracking-tight text-white">
-            MeisterUp
-          </span>
+          <img src="/favicon.ico" alt="MeisterUp Logo" className="h-6 w-6 object-contain" />
+          <span className="text-[15px] font-semibold tracking-tight text-white">MeisterUp</span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
-          {[
-            ["Dashboard", "/dashboard"],
-            ["Skills", "#skills"],
-            ["Leaderboard", "#leaderboard"],
-          ].map(([label, href]) => (
-            <a
-              key={label}
-              href={href}
-              className={cn(
-                "text-[13px] font-medium transition-colors",
-                label === "Dashboard"
-                  ? "text-white"
-                  : "text-white/50 hover:text-white",
-              )}
-            >
-              {label}
-            </a>
-          ))}
+          <Link to="/dashboard" className="text-[13px] font-medium text-white transition-colors">
+            Dashboard
+          </Link>
+          <Link
+            to="/skills"
+            className="text-[13px] font-medium text-white/50 transition-colors hover:text-white"
+          >
+            Skills
+          </Link>
+          <a
+            href="#leaderboard"
+            className="text-[13px] font-medium text-white/50 transition-colors hover:text-white"
+          >
+            Leaderboard
+          </a>
         </nav>
 
         <div className="flex items-center gap-3">
@@ -102,10 +107,10 @@ function DashboardNav() {
               onClick={() => setMenuOpen((v) => !v)}
               className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[13px] font-medium text-white/80 transition hover:bg-white/[0.06]"
             >
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-400 text-[10px] font-bold text-white">
-                M
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-400 text-[10px] font-bold text-white uppercase">
+                {initial}
               </div>
-              <span className="hidden sm:block">Marielle O.</span>
+              <span className="hidden sm:block">{name}</span>
               <ChevronDown className="h-3 w-3 text-white/40" />
             </button>
             <AnimatePresence>
@@ -117,20 +122,27 @@ function DashboardNav() {
                   transition={{ duration: 0.15 }}
                   className="absolute right-0 top-full mt-1.5 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0e0e12]/95 p-1 shadow-xl backdrop-blur-xl"
                 >
-                  {[
-                    { icon: User, label: "Profile", href: "#" },
-                    { icon: Settings, label: "Settings", href: "#" },
-                    { icon: LogOut, label: "Sign out", href: "/" },
-                  ].map((item) => (
-                    <a
-                      key={item.label}
-                      href={item.href}
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
-                    >
-                      <item.icon className="h-3.5 w-3.5" />
-                      {item.label}
-                    </a>
-                  ))}
+                  <a
+                    href="#profile"
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+                  >
+                    <User className="h-3.5 w-3.5" />
+                    Profile
+                  </a>
+                  <a
+                    href="#settings"
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                    Settings
+                  </a>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-white/70 transition hover:bg-white/[0.06] hover:text-white bg-transparent border-none text-left cursor-pointer"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    Sign out
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -146,9 +158,10 @@ function DashboardNav() {
 /* ────────────────────────────────────────────────────────────── */
 
 function Greeting() {
+  const { user } = useAuth();
+  const name = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Developer";
   const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -156,7 +169,7 @@ function Greeting() {
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
       <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-white sm:text-[32px]">
-        {greeting}, Marielle.
+        {greeting}, {name}.
       </h1>
       <p className="mt-1.5 text-[15px] text-white/50">
         You've been on a 7-day streak. Keep building momentum.
@@ -267,15 +280,13 @@ function ContinueLearning() {
       transition={{ delay: 0.35 }}
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold text-white">
-          Continue learning
-        </h2>
-        <a
-          href="#"
+        <h2 className="text-[18px] font-semibold text-white">Continue learning</h2>
+        <Link
+          to="/skills"
           className="flex items-center gap-1 text-[13px] text-white/50 transition hover:text-white"
         >
           View all skills <ArrowRight className="h-3 w-3" />
-        </a>
+        </Link>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -299,9 +310,7 @@ function ContinueLearning() {
                   </div>
                   <div>
                     <div className="text-[11px] text-white/40">{c.skill}</div>
-                    <div className="text-[14px] font-semibold text-white">
-                      {c.concept}
-                    </div>
+                    <div className="text-[14px] font-semibold text-white">{c.concept}</div>
                   </div>
                 </div>
                 <ArrowUpRight className="h-4 w-4 text-white/20 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white/60" />
@@ -415,15 +424,9 @@ function Heatmap() {
     return "bg-emerald-400/80";
   };
   return (
-    <div
-      className="mt-4 grid gap-1"
-      style={{ gridTemplateColumns: "repeat(20, minmax(0,1fr))" }}
-    >
+    <div className="mt-4 grid gap-1" style={{ gridTemplateColumns: "repeat(20, minmax(0,1fr))" }}>
       {cells.map((v, i) => (
-        <div
-          key={i}
-          className={cn("aspect-square rounded-sm", colorFor(v))}
-        />
+        <div key={i} className={cn("aspect-square rounded-sm", colorFor(v))} />
       ))}
     </div>
   );
@@ -458,9 +461,7 @@ function ProgressPanel() {
                     onClick={() => setTimeRange(t)}
                     className={cn(
                       "rounded px-1.5 py-0.5 transition",
-                      timeRange === t
-                        ? "bg-white/[0.08] text-white/70"
-                        : "hover:text-white/60",
+                      timeRange === t ? "bg-white/[0.08] text-white/70" : "hover:text-white/60",
                     )}
                   >
                     {t}
@@ -587,13 +588,8 @@ function RecentActivity() {
       transition={{ delay: 0.55 }}
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold text-white">
-          Recent activity
-        </h2>
-        <a
-          href="#"
-          className="text-[13px] text-white/50 transition hover:text-white"
-        >
+        <h2 className="text-[18px] font-semibold text-white">Recent activity</h2>
+        <a href="#" className="text-[13px] text-white/50 transition hover:text-white">
           View all
         </a>
       </div>
@@ -604,8 +600,7 @@ function RecentActivity() {
             key={i}
             className={cn(
               "flex items-center justify-between px-5 py-3.5 transition hover:bg-white/[0.02]",
-              i !== RECENT_ACTIVITY.length - 1 &&
-                "border-b border-white/[0.06]",
+              i !== RECENT_ACTIVITY.length - 1 && "border-b border-white/[0.06]",
             )}
           >
             <div className="flex items-center gap-3">
@@ -613,9 +608,7 @@ function RecentActivity() {
                 <a.icon className="h-4 w-4 text-white/60" />
               </div>
               <div>
-                <div className="text-[13px] font-medium text-white">
-                  {a.concept}
-                </div>
+                <div className="text-[13px] font-medium text-white">{a.concept}</div>
                 <div className="text-[11px] text-white/40">{a.type}</div>
               </div>
             </div>
@@ -637,13 +630,9 @@ function RecentActivity() {
                 {a.result === "correct" ? "Correct" : "Missed"}
               </div>
               {a.xp > 0 && (
-                <span className="font-mono text-[12px] text-indigo-300">
-                  +{a.xp} XP
-                </span>
+                <span className="font-mono text-[12px] text-indigo-300">+{a.xp} XP</span>
               )}
-              <span className="hidden text-[11px] text-white/30 sm:block">
-                {a.time}
-              </span>
+              <span className="hidden text-[11px] text-white/30 sm:block">{a.time}</span>
             </div>
           </div>
         ))}
@@ -686,39 +675,58 @@ function QuickActions() {
       className="space-y-3"
     >
       <h3 className="text-[14px] font-semibold text-white">Quick actions</h3>
-      {actions.map((a) => (
-        <button
-          key={a.label}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition",
-            a.primary
-              ? "border-indigo-400/30 bg-indigo-400/[0.06] hover:bg-indigo-400/[0.12]"
-              : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]",
-          )}
-        >
-          <div
+      {actions.map((a) =>
+        a.label === "Browse skills" ? (
+          <Link
+            key={a.label}
+            to="/skills"
             className={cn(
-              "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border",
-              a.primary
-                ? "border-indigo-400/30 bg-indigo-400/10 text-indigo-300"
-                : "border-white/10 bg-white/[0.04] text-white/60",
+              "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition",
+              "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]",
             )}
           >
-            <a.icon className="h-4 w-4" />
-          </div>
-          <div>
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/60">
+              <a.icon className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-[13px] font-semibold text-white">{a.label}</div>
+              <div className="text-[11px] text-white/40">{a.desc}</div>
+            </div>
+          </Link>
+        ) : (
+          <button
+            key={a.label}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition",
+              a.primary
+                ? "border-indigo-400/30 bg-indigo-400/[0.06] hover:bg-indigo-400/[0.12]"
+                : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]",
+            )}
+          >
             <div
               className={cn(
-                "text-[13px] font-semibold",
-                a.primary ? "text-indigo-200" : "text-white",
+                "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border",
+                a.primary
+                  ? "border-indigo-400/30 bg-indigo-400/10 text-indigo-300"
+                  : "border-white/10 bg-white/[0.04] text-white/60",
               )}
             >
-              {a.label}
+              <a.icon className="h-4 w-4" />
             </div>
-            <div className="text-[11px] text-white/40">{a.desc}</div>
-          </div>
-        </button>
-      ))}
+            <div>
+              <div
+                className={cn(
+                  "text-[13px] font-semibold",
+                  a.primary ? "text-indigo-200" : "text-white",
+                )}
+              >
+                {a.label}
+              </div>
+              <div className="text-[11px] text-white/40">{a.desc}</div>
+            </div>
+          </button>
+        ),
+      )}
 
       {/* Daily goals */}
       <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
@@ -772,6 +780,28 @@ function QuickActions() {
 /* ────────────────────────────────────────────────────────────── */
 
 function DashboardPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate({ to: "/signin" });
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black font-sans text-white/50">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+          <p className="text-sm">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <div className="min-h-screen bg-black font-sans">
       <DashboardNav />
