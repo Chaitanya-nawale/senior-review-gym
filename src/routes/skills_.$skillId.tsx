@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  Sparkles,
   Brain,
   Check,
   Code2,
@@ -20,6 +21,12 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 export const Route = createFileRoute("/skills_/$skillId")({
   component: SkillPracticePage,
@@ -447,6 +454,25 @@ const MOCK_SKILL_DATA: Record<string, Card[]> = {
   python: PYTHON_CARDS,
 };
 
+const CONCEPT_EXPLANATIONS: Record<string, string> = {
+  "Context Managers": "A context manager in Python allows you to allocate and release resources precisely when you want to. The most widely used example of context managers is the `with` statement. It guarantees that the resource is properly cleaned up after use, even if exceptions occur.",
+  "List Comprehensions": "List comprehensions provide a concise way to create lists. Common applications are to make new lists where each element is the result of some operations applied to each member of another sequence or iterable, or to create a subsequence of those elements that satisfy a certain condition.",
+  "Mutable Defaults": "Default arguments in Python are evaluated only once when the function definition is executed. This means that if you use a mutable default argument and mutate it, you will and have mutated that object for all future calls to the function as well.",
+  "Safe Dict Access": "Using the `.get()` method on a dictionary prevents KeyError exceptions when the key is not found. It allows you to specify a default value to return instead, making your code safer and more concise.",
+  "OOP Constructors": "The `__init__` method is the initializer (often called constructor) that runs when a new instance is created via `ClassName()`. It sets up the object's initial state and attributes.",
+  "Global Interpreter Lock": "The GIL (Global Interpreter Lock) is a mutex that protects access to Python objects, preventing multiple threads from executing Python bytecodes at once. This simplifies memory management but limits CPU-bound parallelism.",
+  "Generators": "The `yield` keyword turns a function into a generator. It pauses execution and produces a value each time `next()` is called, enabling lazy evaluation of sequences without storing the entire sequence in memory.",
+  "Shallow Copy Pitfall": "Using list multiplication like `[[0]] * 3` creates multiple references to the same inner list. Mutating one mutates all of them. Use a list comprehension `[[0] for _ in range(3)]` instead to create independent lists.",
+  "String Slicing": "Slicing in Python `[start:stop:step]` allows you to extract portions of sequences. `[::-1]` reverses a sequence by stepping backwards through the entire sequence. This is a common Python idiom.",
+  "Truthiness": "In Python, empty collections (`[]`, `{}`), empty strings, `0`, and `None` are all falsy (evaluate to `False` in boolean contexts). Non-empty containers and non-zero numbers are truthy.",
+  "Exception Handling": "Python uses `try...except` blocks to catch and handle exceptions gracefully, preventing the program from crashing abruptly.",
+  "Type consistency": "In languages with strict types or when aiming for predictability, variables should generally maintain the same type throughout their lifecycle to avoid subtle runtime errors.",
+  "Basic iteration": "Traditional `for` loops iterate over indices. While sometimes verbose, they offer fine-grained control over the iteration process.",
+  "Closures": "A closure is a function that remembers its lexical scope even when the function is executed outside that lexical scope. It's useful for data privacy and function factories.",
+  "Type Coercion": "Type coercion is the automatic or implicit conversion of values from one data type to another (such as strings to numbers). In JavaScript, the `+` operator prefers string concatenation when one operand is a string.",
+  "Arrow Functions": "Arrow functions provide a shorter syntax for writing function expressions. They do not bind their own `this`, `arguments`, `super`, or `new.target`.",
+};
+
 /* ────────────────────────────────────────────────────────────── */
 /*  COMPONENTS                                                     */
 /* ────────────────────────────────────────────────────────────── */
@@ -510,10 +536,12 @@ function CodeReviewCardComponent({
   card,
   approveOpacity,
   rejectOpacity,
+  onExplainConcept,
 }: {
   card: CodeReviewCard;
   approveOpacity: any;
   rejectOpacity: any;
+  onExplainConcept: () => void;
 }) {
   return (
     <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-[#0e0e12] to-black shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)]">
@@ -529,9 +557,16 @@ function CodeReviewCardComponent({
       <pre className="flex-1 overflow-auto p-5 font-mono text-[12px] leading-[1.7] text-white/85">
         <code>{highlight(card.code)}</code>
       </pre>
-      <div className="border-t border-white/[0.06] bg-black/40 px-4 py-3 text-[11px] text-white/40">
-        Concept · <span className="text-white/70">{card.concept}</span>
-      </div>
+      <button
+        type="button"
+        onClick={onExplainConcept}
+        className="w-full flex items-center justify-between border-t border-white/[0.06] bg-black/40 px-4 py-3 text-left text-[11px] text-white/40 transition-colors hover:bg-white/[0.02] cursor-pointer"
+      >
+        <span>
+          Concept · <span className="text-white/70">{card.concept}</span>
+        </span>
+        <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+      </button>
 
       <motion.div
         style={{ opacity: approveOpacity }}
@@ -555,10 +590,12 @@ function ConceptCardComponent({
   card,
   selectedOption,
   onSelect,
+  onExplainConcept,
 }: {
   card: ConceptCard;
   selectedOption: number | null;
   onSelect: (index: number) => void;
+  onExplainConcept: () => void;
 }) {
   const answered = selectedOption !== null;
   return (
@@ -627,9 +664,16 @@ function ConceptCardComponent({
         </div>
       </div>
 
-      <div className="border-t border-violet-400/10 bg-black/40 px-4 py-3 text-[11px] text-white/40">
-        Concept · <span className="text-violet-300/70">{card.concept}</span>
-      </div>
+      <button
+        type="button"
+        onClick={onExplainConcept}
+        className="w-full flex items-center justify-between border-t border-violet-400/10 bg-black/40 px-4 py-3 text-left text-[11px] text-white/40 transition-colors hover:bg-violet-500/[0.02] cursor-pointer"
+      >
+        <span>
+          Concept · <span className="text-violet-300/70">{card.concept}</span>
+        </span>
+        <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+      </button>
     </div>
   );
 }
@@ -640,10 +684,12 @@ function PredictOutputCardComponent({
   card,
   selectedOption,
   onSelect,
+  onExplainConcept,
 }: {
   card: PredictOutputCard;
   selectedOption: number | null;
   onSelect: (index: number) => void;
+  onExplainConcept: () => void;
 }) {
   const answered = selectedOption !== null;
   return (
@@ -714,9 +760,16 @@ function PredictOutputCardComponent({
         </div>
       </div>
 
-      <div className="border-t border-amber-400/10 bg-black/40 px-4 py-3 text-[11px] text-white/40">
-        Concept · <span className="text-amber-300/70">{card.concept}</span>
-      </div>
+      <button
+        type="button"
+        onClick={onExplainConcept}
+        className="w-full flex items-center justify-between border-t border-amber-400/10 bg-black/40 px-4 py-3 text-left text-[11px] text-white/40 transition-colors hover:bg-amber-500/[0.02] cursor-pointer"
+      >
+        <span>
+          Concept · <span className="text-amber-300/70">{card.concept}</span>
+        </span>
+        <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+      </button>
     </div>
   );
 }
@@ -727,10 +780,12 @@ function FillBlankCardComponent({
   card,
   selectedOption,
   onSelect,
+  onExplainConcept,
 }: {
   card: FillBlankCard;
   selectedOption: number | null;
   onSelect: (index: number) => void;
+  onExplainConcept: () => void;
 }) {
   const answered = selectedOption !== null;
   return (
@@ -784,9 +839,16 @@ function FillBlankCardComponent({
         </div>
       </div>
 
-      <div className="border-t border-cyan-400/10 bg-black/40 px-4 py-3 text-[11px] text-white/40">
-        Concept · <span className="text-cyan-300/70">{card.concept}</span>
-      </div>
+      <button
+        type="button"
+        onClick={onExplainConcept}
+        className="w-full flex items-center justify-between border-t border-cyan-400/10 bg-black/40 px-4 py-3 text-left text-[11px] text-white/40 transition-colors hover:bg-cyan-500/[0.02] cursor-pointer"
+      >
+        <span>
+          Concept · <span className="text-cyan-300/70">{card.concept}</span>
+        </span>
+        <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+      </button>
     </div>
   );
 }
@@ -836,6 +898,7 @@ function SkillPracticePage() {
   const [xp, setXp] = useState(0);
   const [prevStreak, setPrevStreak] = useState(0);
   const [prevXp, setPrevXp] = useState(0);
+  const [explainConceptOpen, setExplainConceptOpen] = useState(false);
 
   // Framer Motion Values (for code-review swipe)
   const x = useMotionValue(0);
@@ -926,6 +989,8 @@ function SkillPracticePage() {
 
   /* ── Render the right card component ── */
   function renderCard() {
+    const handleExplain = () => setExplainConceptOpen(true);
+
     switch (card.type) {
       case "code-review":
         return (
@@ -933,6 +998,7 @@ function SkillPracticePage() {
             card={card}
             approveOpacity={approveOpacity}
             rejectOpacity={rejectOpacity}
+            onExplainConcept={handleExplain}
           />
         );
       case "concept":
@@ -941,6 +1007,7 @@ function SkillPracticePage() {
             card={card}
             selectedOption={selectedOption}
             onSelect={resolveOption}
+            onExplainConcept={handleExplain}
           />
         );
       case "predict-output":
@@ -949,6 +1016,7 @@ function SkillPracticePage() {
             card={card}
             selectedOption={selectedOption}
             onSelect={resolveOption}
+            onExplainConcept={handleExplain}
           />
         );
       case "fill-blank":
@@ -957,6 +1025,7 @@ function SkillPracticePage() {
             card={card}
             selectedOption={selectedOption}
             onSelect={resolveOption}
+            onExplainConcept={handleExplain}
           />
         );
     }
@@ -1172,11 +1241,27 @@ function SkillPracticePage() {
         <KeyboardBridge
           onResolve={resolveSwipe}
           onSelectOption={resolveOption}
-          active={!feedback}
+          active={!feedback && !explainConceptOpen}
           cardType={card.type}
           optionCount={card.type !== "code-review" ? (card as any).options?.length ?? 4 : 0}
         />
       </main>
+
+      <Dialog open={explainConceptOpen} onOpenChange={setExplainConceptOpen}>
+        <DialogContent className="border-white/10 bg-[#0e0e12] text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="h-5 w-5 text-indigo-400" />
+              {card.concept}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2 text-sm leading-relaxed text-white/70">
+            <p>
+              {CONCEPT_EXPLANATIONS[card.concept] || `This is an explanation for ${card.concept}. In a full implementation, this would be generated by AI or fetched from the backend.`}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
