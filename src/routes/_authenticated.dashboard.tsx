@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -9,6 +9,7 @@ import {
   Brain,
   Check,
   ChevronDown,
+  ChevronRight,
   Clock,
   Cpu,
   Flame,
@@ -27,7 +28,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — MeisterUp" },
@@ -47,110 +48,6 @@ export const Route = createFileRoute("/dashboard")({
 
 function cn(...c: (string | false | undefined | null)[]) {
   return c.filter(Boolean).join(" ");
-}
-
-/* ────────────────────────────────────────────────────────────── */
-/*  TOP NAV                                                        */
-/* ────────────────────────────────────────────────────────────── */
-
-function DashboardNav() {
-  const { user, signOut } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const name = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Developer";
-  const initial = name.charAt(0).toUpperCase();
-
-  const handleSignOut = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await signOut();
-    navigate({ to: "/" });
-  };
-
-  return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-        <Link to="/" className="group flex items-center gap-2">
-          <img src="/favicon.ico" alt="MeisterUp Logo" className="h-6 w-6 object-contain" />
-          <span className="text-[15px] font-semibold tracking-tight text-white">MeisterUp</span>
-        </Link>
-
-        <nav className="hidden items-center gap-6 md:flex">
-          <Link to="/dashboard" className="text-[13px] font-medium text-white transition-colors">
-            Dashboard
-          </Link>
-          <Link
-            to="/skills"
-            className="text-[13px] font-medium text-white/50 transition-colors hover:text-white"
-          >
-            Skills
-          </Link>
-          <a
-            href="#leaderboard"
-            className="text-[13px] font-medium text-white/50 transition-colors hover:text-white"
-          >
-            Leaderboard
-          </a>
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <button
-            className="relative rounded-lg border border-white/10 bg-white/[0.03] p-2 text-white/50 transition hover:bg-white/[0.06] hover:text-white"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-            <div className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-indigo-400 shadow-[0_0_6px] shadow-indigo-400" />
-          </button>
-
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[13px] font-medium text-white/80 transition hover:bg-white/[0.06]"
-            >
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-400 text-[10px] font-bold text-white uppercase">
-                {initial}
-              </div>
-              <span className="hidden sm:block">{name}</span>
-              <ChevronDown className="h-3 w-3 text-white/40" />
-            </button>
-            <AnimatePresence>
-              {menuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-1.5 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0e0e12]/95 p-1 shadow-xl backdrop-blur-xl"
-                >
-                  <a
-                    href="#profile"
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
-                  >
-                    <User className="h-3.5 w-3.5" />
-                    Profile
-                  </a>
-                  <a
-                    href="#settings"
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
-                  >
-                    <Settings className="h-3.5 w-3.5" />
-                    Settings
-                  </a>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-white/70 transition hover:bg-white/[0.06] hover:text-white bg-transparent border-none text-left cursor-pointer"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    Sign out
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
 }
 
 /* ────────────────────────────────────────────────────────────── */
@@ -561,6 +458,8 @@ const RECENT_ACTIVITY = [
     xp: 0,
     time: "1h ago",
     icon: Cpu,
+    explanation:
+      "You chose 'Increase max connections to 5000' but the database instance only has 4GB RAM. This would lead to OOM errors. The correct approach was 'Implement application-side pooling with PgBouncer'.",
   },
   {
     type: "Ordering",
@@ -581,6 +480,8 @@ const RECENT_ACTIVITY = [
 ];
 
 function RecentActivity() {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -596,45 +497,78 @@ function RecentActivity() {
 
       <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
         {RECENT_ACTIVITY.map((a, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex items-center justify-between px-5 py-3.5 transition hover:bg-white/[0.02]",
-              i !== RECENT_ACTIVITY.length - 1 && "border-b border-white/[0.06]",
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
-                <a.icon className="h-4 w-4 text-white/60" />
-              </div>
-              <div>
-                <div className="text-[13px] font-medium text-white">{a.concept}</div>
-                <div className="text-[11px] text-white/40">{a.type}</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-                  a.result === "correct"
-                    ? "bg-emerald-400/10 text-emerald-300"
-                    : "bg-rose-400/10 text-rose-300",
-                )}
-              >
-                {a.result === "correct" ? (
-                  <Check className="h-3 w-3" />
-                ) : (
-                  <span className="text-[10px]">✗</span>
-                )}
-                {a.result === "correct" ? "Correct" : "Missed"}
-              </div>
-              {a.xp > 0 && (
-                <span className="font-mono text-[12px] text-indigo-300">+{a.xp} XP</span>
+          <Fragment key={i}>
+            <div
+              className={cn(
+                "flex items-center justify-between px-5 py-3.5 transition hover:bg-white/[0.02]",
+                i !== RECENT_ACTIVITY.length - 1 && "border-b border-white/[0.06]",
               )}
-              <span className="hidden text-[11px] text-white/30 sm:block">{a.time}</span>
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
+                  <a.icon className="h-4 w-4 text-white/60" />
+                </div>
+                <div>
+                  <div className="text-[13px] font-medium text-white">{a.concept}</div>
+                  <div className="text-[11px] text-white/40">{a.type}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                    a.result === "correct"
+                      ? "bg-emerald-400/10 text-emerald-300"
+                      : "bg-rose-400/10 text-rose-300",
+                  )}
+                >
+                  {a.result === "correct" ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <span className="text-[10px]">✗</span>
+                  )}
+                  {a.result === "correct" ? "Correct" : "Missed"}
+                </div>
+                {a.xp > 0 && (
+                  <span className="font-mono text-[12px] text-indigo-300">+{a.xp} XP</span>
+                )}
+                {a.result === "incorrect" && (
+                  <button
+                    onClick={() => setExpandedId(expandedId === i ? null : i)}
+                    className="hidden text-[11px] font-medium text-indigo-400 transition hover:text-indigo-300 sm:block"
+                  >
+                    Review
+                  </button>
+                )}
+                <span className="hidden text-[11px] text-white/30 sm:block">{a.time}</span>
+              </div>
             </div>
-          </div>
+            <AnimatePresence>
+              {expandedId === i && a.explanation && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden bg-rose-400/[0.02]"
+                >
+                  <div className="border-t border-rose-400/10 px-5 py-4">
+                    <div className="flex items-start gap-3">
+                      <Brain className="mt-0.5 h-4 w-4 text-rose-400/70" />
+                      <div>
+                        <div className="text-[12px] font-medium text-rose-300">
+                          Why did I get this wrong?
+                        </div>
+                        <div className="mt-1 text-[13px] leading-relaxed text-white/70">
+                          {a.explanation}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Fragment>
         ))}
       </div>
     </motion.div>
@@ -780,33 +714,13 @@ function QuickActions() {
 /* ────────────────────────────────────────────────────────────── */
 
 function DashboardPage() {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate({ to: "/signin" });
-    }
-  }, [user, loading, navigate]);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-black font-sans text-white/50">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-          <p className="text-sm">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  const { user } = useAuth();
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-black font-sans">
-      <DashboardNav />
-
-      <main className="mx-auto max-w-7xl px-6 pt-24 pb-20">
+    <div className="bg-black font-sans">
+      <main className="mx-auto max-w-7xl px-6 pt-10 pb-20">
         <Greeting />
 
         <div className="mt-8">

@@ -9,6 +9,8 @@ import {
   Brain,
   Check,
   Code2,
+  Cpu,
+  Layers,
   Flame,
   GitBranch,
   HelpCircle,
@@ -21,16 +23,69 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 
 export const Route = createFileRoute("/skills_/$skillId")({
   component: SkillPracticePage,
 });
+
+/* ────────────────────────────────────────────────────────────── */
+/*  CARD COMPONENTS                                                */
+/* ────────────────────────────────────────────────────────────── */
+
+function ExplainBackCardComponent({
+  card,
+  answered,
+  onSubmit,
+  onExplainConcept,
+}: {
+  card: ExplainBackCard;
+  answered: boolean;
+  onSubmit: (text: string) => void;
+  onExplainConcept: () => void;
+}) {
+  const [text, setText] = useState("");
+  return (
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] shadow-2xl backdrop-blur-xl">
+      <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-6 py-4">
+        <div className="flex items-center gap-2 text-white/50">
+          <BookOpen className="h-4 w-4" />
+          <span className="text-[13px] font-medium tracking-wide uppercase">{card.concept}</span>
+        </div>
+        <button
+          onClick={onExplainConcept}
+          className="rounded-full bg-white/5 p-1.5 text-white/40 hover:bg-white/10 hover:text-white transition"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="p-6 pb-2">
+        <h2 className="text-xl font-semibold text-white">{card.title}</h2>
+        <p className="mt-2 text-[15px] leading-relaxed text-white/70">{card.question}</p>
+      </div>
+      <div className="flex-1 p-6 pt-2">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={answered}
+          placeholder="Explain it in your own words..."
+          className="h-full w-full resize-none rounded-xl border border-white/10 bg-black/40 p-4 text-[14px] text-white/90 placeholder-white/30 focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition disabled:opacity-50"
+        />
+      </div>
+      {!answered && (
+        <div className="border-t border-white/[0.06] p-4 bg-white/[0.01]">
+          <button
+            onClick={() => onSubmit(text)}
+            disabled={text.trim().length < 10}
+            className="w-full rounded-xl bg-indigo-500 py-3 text-[14px] font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-50 disabled:hover:bg-indigo-500"
+          >
+            Submit Answer
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ────────────────────────────────────────────────────────────── */
 /*  HELPERS                                                        */
@@ -44,7 +99,7 @@ function cn(...classes: (string | false | undefined | null)[]) {
 function highlight(code: string, blankHighlight = false) {
   const KW =
     /\b(const|let|var|function|return|if|else|for|while|export|import|from|new|class|extends|await|async|try|catch|throw|def|print|range|True|False|None|self|with|as|open|in|not|and|or|is|lambda|yield|raise|except|finally|pass|break|continue|elif|del|global|nonlocal|assert|CREATE|INDEX|ON|WHERE|IN|CONCURRENTLY|DESC)\b/g;
-  const STR = /([\"'`])(?:\\.|(?!\1).)*\1/g;
+  const STR = /(["'`])(?:\\.|(?!\1).)*\1/g;
   const CMT = /(\/\/[^\n]*|--[^\n]*|#[^\n]*)/g;
   const NUM = /\b\d+\b/g;
   const BLANK = /___+/g;
@@ -77,7 +132,10 @@ function highlight(code: string, blankHighlight = false) {
   apply(KW, "text-indigo-400 font-semibold");
   apply(NUM, "text-fuchsia-300");
   if (blankHighlight) {
-    apply(BLANK, "bg-cyan-400/20 text-cyan-300 px-1 rounded font-bold border-b-2 border-cyan-400/50");
+    apply(
+      BLANK,
+      "bg-cyan-400/20 text-cyan-300 px-1 rounded font-bold border-b-2 border-cyan-400/50",
+    );
   }
 
   return parts.map((p, i) =>
@@ -105,7 +163,16 @@ function shuffle<T>(arr: T[]): T[] {
 /*  CARD TYPES                                                     */
 /* ────────────────────────────────────────────────────────────── */
 
-type CardType = "code-review" | "concept" | "predict-output" | "fill-blank";
+type CardType =
+  | "code-review"
+  | "concept"
+  | "predict-output"
+  | "fill-blank"
+  | "ai-audit"
+  | "race-condition"
+  | "perf-trap"
+  | "system-decision"
+  | "explain-back";
 
 type BaseCard = {
   id: string;
@@ -122,8 +189,23 @@ type CodeReviewCard = BaseCard & {
   bad: boolean;
 };
 
+type AiAuditCard = BaseCard & {
+  type: "ai-audit";
+  title: string;
+  lang: string;
+  code: string;
+  bad: boolean;
+};
+
 type ConceptCard = BaseCard & {
   type: "concept";
+  question: string;
+  options: string[];
+  correctIndex: number;
+};
+
+type SystemDecisionCard = BaseCard & {
+  type: "system-decision";
   question: string;
   options: string[];
   correctIndex: number;
@@ -138,16 +220,49 @@ type PredictOutputCard = BaseCard & {
   correctIndex: number;
 };
 
-type FillBlankCard = BaseCard & {
-  type: "fill-blank";
+type RaceConditionCard = BaseCard & {
+  type: "race-condition";
   title: string;
   lang: string;
-  code: string; // contains `___` placeholder
+  code: string;
   options: string[];
   correctIndex: number;
 };
 
-type Card = CodeReviewCard | ConceptCard | PredictOutputCard | FillBlankCard;
+type PerfTrapCard = BaseCard & {
+  type: "perf-trap";
+  title: string;
+  lang: string;
+  code: string;
+  options: string[];
+  correctIndex: number;
+};
+
+type FillBlankCard = BaseCard & {
+  type: "fill-blank";
+  title: string;
+  lang: string;
+  code: string;
+  options: string[];
+  correctIndex: number;
+};
+
+type ExplainBackCard = BaseCard & {
+  type: "explain-back";
+  title: string;
+  question: string;
+};
+
+type Card =
+  | CodeReviewCard
+  | ConceptCard
+  | PredictOutputCard
+  | FillBlankCard
+  | AiAuditCard
+  | RaceConditionCard
+  | PerfTrapCard
+  | SystemDecisionCard
+  | ExplainBackCard;
 
 /* ────────────────────────────────────────────────────────────── */
 /*  CARD TYPE METADATA                                             */
@@ -211,6 +326,61 @@ const CARD_META: Record<
     subtitle: "Complete the Code.",
     hint: "Pick the correct missing piece",
   },
+  "ai-audit": {
+    label: "AI Audit",
+    icon: Sparkles,
+    accentBorder: "border-rose-400/30",
+    accentBg: "bg-rose-400/10",
+    accentText: "text-rose-300",
+    accentGlow: "bg-rose-500",
+    title: "AI Audit",
+    subtitle: "Spot the Hallucination.",
+    hint: "Swipe right to approve, left to reject",
+  },
+  "race-condition": {
+    label: "Race Condition",
+    icon: Layers,
+    accentBorder: "border-orange-400/30",
+    accentBg: "bg-orange-400/10",
+    accentText: "text-orange-300",
+    accentGlow: "bg-orange-500",
+    title: "Race Condition",
+    subtitle: "Find the Interleaving.",
+    hint: "Select the sequence that fails",
+  },
+  "perf-trap": {
+    label: "Performance Trap",
+    icon: TrendingUp,
+    accentBorder: "border-pink-400/30",
+    accentBg: "bg-pink-400/10",
+    accentText: "text-pink-300",
+    accentGlow: "bg-pink-500",
+    title: "Performance Trap",
+    subtitle: "Find the Bottleneck.",
+    hint: "Identify the hidden cost",
+  },
+  "system-decision": {
+    label: "System Decision",
+    icon: Cpu,
+    accentBorder: "border-teal-400/30",
+    accentBg: "bg-teal-400/10",
+    accentText: "text-teal-300",
+    accentGlow: "bg-teal-500",
+    title: "Architecture",
+    subtitle: "Design Under Constraint.",
+    hint: "Select the optimal tradeoff",
+  },
+  "explain-back": {
+    label: "Explain Back",
+    icon: BookOpen,
+    accentBorder: "border-blue-400/30",
+    accentBg: "bg-blue-400/10",
+    accentText: "text-blue-300",
+    accentGlow: "bg-blue-500",
+    title: "Teach It",
+    subtitle: "In Your Own Words.",
+    hint: "Explain the concept",
+  },
 };
 
 /* ────────────────────────────────────────────────────────────── */
@@ -218,6 +388,51 @@ const CARD_META: Record<
 /* ────────────────────────────────────────────────────────────── */
 
 const PYTHON_CARDS: Card[] = [
+  // New Philosophy-Aligned Cards
+  {
+    id: "py-audit-1",
+    type: "ai-audit",
+    title: "ChatGPT's Dictionary Iteration",
+    lang: "python",
+    code: `def get_keys(d):\n    # AI generated this to return keys\n    return [k for k, v in d]`,
+    bad: true,
+    concept: "AI Hallucination",
+    why: "Iterating directly over a dict yields keys, not (key, value) tuples. It should be `d.items()`.",
+  },
+  {
+    id: "py-perf-1",
+    type: "perf-trap",
+    title: "String Concatenation in a Loop",
+    lang: "python",
+    code: `s = ""\nfor word in words:\n    s += word + " "`,
+    options: [
+      "O(N) memory allocation",
+      "O(N^2) memory reallocation due to immutable strings",
+      "Memory leak",
+    ],
+    correctIndex: 1,
+    concept: "Performance Trap",
+    why: 'Strings in Python are immutable. `+=` in a loop creates a new string each iteration, causing quadratic time complexity. Use `"".join(words)` instead.',
+  },
+  {
+    id: "py-sys-1",
+    type: "system-decision",
+    question:
+      "You need to process 1M background jobs daily in Python. Which queue mechanism provides the best durability and scaling tradeoff?",
+    options: ["In-memory queue.Queue", "Celery with Redis broker", "Celery with RabbitMQ broker"],
+    correctIndex: 2,
+    concept: "System Decision",
+    why: "RabbitMQ provides better message durability and routing guarantees for mission-critical jobs compared to Redis (which is primarily an in-memory datastore).",
+  },
+  {
+    id: "py-explain-1",
+    type: "explain-back",
+    title: "Global Interpreter Lock",
+    question:
+      "Explain the Global Interpreter Lock (GIL) in Python to a junior engineer, and why multithreading doesn't make CPU-bound tasks faster.",
+    concept: "Explain Back",
+    why: "The GIL prevents multiple native threads from executing Python bytecodes at once. This protects CPython's memory management from race conditions, but makes multi-threading ineffective for CPU-bound tasks.",
+  },
   // Code Review cards
   {
     id: "py-cr-1",
@@ -311,12 +526,7 @@ const PYTHON_CARDS: Card[] = [
     title: "List multiplication surprise",
     lang: "python",
     code: `a = [[0]] * 3\na[0][0] = 5\nprint(a)`,
-    options: [
-      "[[5], [0], [0]]",
-      "[[5], [5], [5]]",
-      "[[0], [0], [5]]",
-      "Error",
-    ],
+    options: ["[[5], [0], [0]]", "[[5], [5], [5]]", "[[0], [0], [5]]", "Error"],
     correctIndex: 1,
     concept: "Shallow Copy Pitfall",
     why: "`[[0]] * 3` creates 3 references to the same inner list. Mutating one mutates all of them. Use a list comprehension `[[0] for _ in range(3)]` instead.",
@@ -327,12 +537,7 @@ const PYTHON_CARDS: Card[] = [
     title: "String slicing",
     lang: "python",
     code: `s = "Hello, World!"\nprint(s[::-1])`,
-    options: [
-      '"Hello, World!"',
-      '"!dlroW ,olleH"',
-      '"World! Hello,"',
-      "Error",
-    ],
+    options: ['"Hello, World!"', '"!dlroW ,olleH"', '"World! Hello,"', "Error"],
     correctIndex: 1,
     concept: "String Slicing",
     why: "`[::-1]` reverses a sequence by stepping backwards through the entire string. This is a common Python idiom for reversing strings and lists.",
@@ -455,22 +660,38 @@ const MOCK_SKILL_DATA: Record<string, Card[]> = {
 };
 
 const CONCEPT_EXPLANATIONS: Record<string, string> = {
-  "Context Managers": "A context manager in Python allows you to allocate and release resources precisely when you want to. The most widely used example of context managers is the `with` statement. It guarantees that the resource is properly cleaned up after use, even if exceptions occur.",
-  "List Comprehensions": "List comprehensions provide a concise way to create lists. Common applications are to make new lists where each element is the result of some operations applied to each member of another sequence or iterable, or to create a subsequence of those elements that satisfy a certain condition.",
-  "Mutable Defaults": "Default arguments in Python are evaluated only once when the function definition is executed. This means that if you use a mutable default argument and mutate it, you will and have mutated that object for all future calls to the function as well.",
-  "Safe Dict Access": "Using the `.get()` method on a dictionary prevents KeyError exceptions when the key is not found. It allows you to specify a default value to return instead, making your code safer and more concise.",
-  "OOP Constructors": "The `__init__` method is the initializer (often called constructor) that runs when a new instance is created via `ClassName()`. It sets up the object's initial state and attributes.",
-  "Global Interpreter Lock": "The GIL (Global Interpreter Lock) is a mutex that protects access to Python objects, preventing multiple threads from executing Python bytecodes at once. This simplifies memory management but limits CPU-bound parallelism.",
-  "Generators": "The `yield` keyword turns a function into a generator. It pauses execution and produces a value each time `next()` is called, enabling lazy evaluation of sequences without storing the entire sequence in memory.",
-  "Shallow Copy Pitfall": "Using list multiplication like `[[0]] * 3` creates multiple references to the same inner list. Mutating one mutates all of them. Use a list comprehension `[[0] for _ in range(3)]` instead to create independent lists.",
-  "String Slicing": "Slicing in Python `[start:stop:step]` allows you to extract portions of sequences. `[::-1]` reverses a sequence by stepping backwards through the entire sequence. This is a common Python idiom.",
-  "Truthiness": "In Python, empty collections (`[]`, `{}`), empty strings, `0`, and `None` are all falsy (evaluate to `False` in boolean contexts). Non-empty containers and non-zero numbers are truthy.",
-  "Exception Handling": "Python uses `try...except` blocks to catch and handle exceptions gracefully, preventing the program from crashing abruptly.",
-  "Type consistency": "In languages with strict types or when aiming for predictability, variables should generally maintain the same type throughout their lifecycle to avoid subtle runtime errors.",
-  "Basic iteration": "Traditional `for` loops iterate over indices. While sometimes verbose, they offer fine-grained control over the iteration process.",
-  "Closures": "A closure is a function that remembers its lexical scope even when the function is executed outside that lexical scope. It's useful for data privacy and function factories.",
-  "Type Coercion": "Type coercion is the automatic or implicit conversion of values from one data type to another (such as strings to numbers). In JavaScript, the `+` operator prefers string concatenation when one operand is a string.",
-  "Arrow Functions": "Arrow functions provide a shorter syntax for writing function expressions. They do not bind their own `this`, `arguments`, `super`, or `new.target`.",
+  "Context Managers":
+    "A context manager in Python allows you to allocate and release resources precisely when you want to. The most widely used example of context managers is the `with` statement. It guarantees that the resource is properly cleaned up after use, even if exceptions occur.",
+  "List Comprehensions":
+    "List comprehensions provide a concise way to create lists. Common applications are to make new lists where each element is the result of some operations applied to each member of another sequence or iterable, or to create a subsequence of those elements that satisfy a certain condition.",
+  "Mutable Defaults":
+    "Default arguments in Python are evaluated only once when the function definition is executed. This means that if you use a mutable default argument and mutate it, you will and have mutated that object for all future calls to the function as well.",
+  "Safe Dict Access":
+    "Using the `.get()` method on a dictionary prevents KeyError exceptions when the key is not found. It allows you to specify a default value to return instead, making your code safer and more concise.",
+  "OOP Constructors":
+    "The `__init__` method is the initializer (often called constructor) that runs when a new instance is created via `ClassName()`. It sets up the object's initial state and attributes.",
+  "Global Interpreter Lock":
+    "The GIL (Global Interpreter Lock) is a mutex that protects access to Python objects, preventing multiple threads from executing Python bytecodes at once. This simplifies memory management but limits CPU-bound parallelism.",
+  Generators:
+    "The `yield` keyword turns a function into a generator. It pauses execution and produces a value each time `next()` is called, enabling lazy evaluation of sequences without storing the entire sequence in memory.",
+  "Shallow Copy Pitfall":
+    "Using list multiplication like `[[0]] * 3` creates multiple references to the same inner list. Mutating one mutates all of them. Use a list comprehension `[[0] for _ in range(3)]` instead to create independent lists.",
+  "String Slicing":
+    "Slicing in Python `[start:stop:step]` allows you to extract portions of sequences. `[::-1]` reverses a sequence by stepping backwards through the entire sequence. This is a common Python idiom.",
+  Truthiness:
+    "In Python, empty collections (`[]`, `{}`), empty strings, `0`, and `None` are all falsy (evaluate to `False` in boolean contexts). Non-empty containers and non-zero numbers are truthy.",
+  "Exception Handling":
+    "Python uses `try...except` blocks to catch and handle exceptions gracefully, preventing the program from crashing abruptly.",
+  "Type consistency":
+    "In languages with strict types or when aiming for predictability, variables should generally maintain the same type throughout their lifecycle to avoid subtle runtime errors.",
+  "Basic iteration":
+    "Traditional `for` loops iterate over indices. While sometimes verbose, they offer fine-grained control over the iteration process.",
+  Closures:
+    "A closure is a function that remembers its lexical scope even when the function is executed outside that lexical scope. It's useful for data privacy and function factories.",
+  "Type Coercion":
+    "Type coercion is the automatic or implicit conversion of values from one data type to another (such as strings to numbers). In JavaScript, the `+` operator prefers string concatenation when one operand is a string.",
+  "Arrow Functions":
+    "Arrow functions provide a shorter syntax for writing function expressions. They do not bind their own `this`, `arguments`, `super`, or `new.target`.",
 };
 
 /* ────────────────────────────────────────────────────────────── */
@@ -538,9 +759,9 @@ function CodeReviewCardComponent({
   rejectOpacity,
   onExplainConcept,
 }: {
-  card: CodeReviewCard;
-  approveOpacity: any;
-  rejectOpacity: any;
+  card: CodeReviewCard | AiAuditCard;
+  approveOpacity: import("framer-motion").MotionValue<number>;
+  rejectOpacity: import("framer-motion").MotionValue<number>;
   onExplainConcept: () => void;
 }) {
   return (
@@ -592,7 +813,7 @@ function ConceptCardComponent({
   onSelect,
   onExplainConcept,
 }: {
-  card: ConceptCard;
+  card: ConceptCard | SystemDecisionCard;
   selectedOption: number | null;
   onSelect: (index: number) => void;
   onExplainConcept: () => void;
@@ -624,7 +845,8 @@ function ConceptCardComponent({
               "w-full rounded-xl border px-4 py-3 text-[13px] transition-all cursor-pointer flex items-center gap-3";
 
             if (!answered) {
-              optClass += " border-white/10 bg-white/[0.02] text-white/80 hover:bg-white/[0.06] hover:border-white/20";
+              optClass +=
+                " border-white/10 bg-white/[0.02] text-white/80 hover:bg-white/[0.06] hover:border-white/20";
             } else if (isCorrect) {
               optClass += " border-emerald-400/40 bg-emerald-400/10 text-emerald-300";
             } else if (isSelected && !isCorrect) {
@@ -686,7 +908,7 @@ function PredictOutputCardComponent({
   onSelect,
   onExplainConcept,
 }: {
-  card: PredictOutputCard;
+  card: PredictOutputCard | RaceConditionCard | PerfTrapCard;
   selectedOption: number | null;
   onSelect: (index: number) => void;
   onExplainConcept: () => void;
@@ -720,7 +942,8 @@ function PredictOutputCardComponent({
               "w-full rounded-xl border px-4 py-2.5 text-[13px] font-mono transition-all cursor-pointer flex items-center gap-3";
 
             if (!answered) {
-              optClass += " border-white/10 bg-white/[0.02] text-white/80 hover:bg-white/[0.06] hover:border-white/20";
+              optClass +=
+                " border-white/10 bg-white/[0.02] text-white/80 hover:bg-white/[0.06] hover:border-white/20";
             } else if (isCorrect) {
               optClass += " border-emerald-400/40 bg-emerald-400/10 text-emerald-300";
             } else if (isSelected && !isCorrect) {
@@ -816,7 +1039,8 @@ function FillBlankCardComponent({
               "w-full rounded-xl border px-4 py-2.5 text-[13px] font-mono transition-all cursor-pointer text-center";
 
             if (!answered) {
-              optClass += " border-white/10 bg-white/[0.02] text-white/80 hover:bg-white/[0.06] hover:border-white/20";
+              optClass +=
+                " border-white/10 bg-white/[0.02] text-white/80 hover:bg-white/[0.06] hover:border-white/20";
             } else if (isCorrect) {
               optClass += " border-emerald-400/40 bg-emerald-400/10 text-emerald-300";
             } else if (isSelected && !isCorrect) {
@@ -884,7 +1108,7 @@ function SkillPracticePage() {
 
   // Deck — shuffle once on mount
   const rawDeck = MOCK_SKILL_DATA[skillId] || FALLBACK_CARDS;
-  const deck = useMemo(() => shuffle(rawDeck), [skillId]);
+  const deck = useMemo(() => shuffle(rawDeck), [rawDeck]);
 
   // Swiping State
   const [i, setI] = useState(0);
@@ -936,9 +1160,9 @@ function SkillPracticePage() {
 
   /* ── Resolve: code-review swipe ── */
   function resolveSwipe(dir: "left" | "right") {
-    if (card.type !== "code-review") return;
+    if (card.type !== "code-review" && card.type !== "ai-audit") return;
     const userSaysBad = dir === "left";
-    const correct = userSaysBad === card.bad;
+    const correct = userSaysBad === (card as CodeReviewCard | AiAuditCard).bad;
     setPrevStreak(streak);
     setPrevXp(xp);
     setFeedback({ correct, card });
@@ -952,10 +1176,11 @@ function SkillPracticePage() {
 
   /* ── Resolve: MCQ option select ── */
   function resolveOption(index: number) {
-    if (card.type === "code-review") return;
+    if (card.type === "code-review" || card.type === "ai-audit" || card.type === "explain-back")
+      return;
     if (selectedOption !== null) return; // already answered
     setSelectedOption(index);
-    const correct = index === (card as ConceptCard | PredictOutputCard | FillBlankCard).correctIndex;
+    const correct = index === (card as ConceptCard | SystemDecisionCard).correctIndex;
     setPrevStreak(streak);
     setPrevXp(xp);
 
@@ -969,6 +1194,22 @@ function SkillPracticePage() {
         setStreak(0);
       }
     }, 600);
+  }
+
+  function resolveExplainBack(text: string) {
+    if (card.type !== "explain-back") return;
+    if (selectedOption !== null) return;
+    setSelectedOption(1); // mark as answered
+    const correct = text.trim().length > 10;
+    setPrevStreak(streak);
+    setPrevXp(xp);
+    setFeedback({ correct, card });
+    if (correct) {
+      setStreak((s) => s + 1);
+      setXp((v) => v + 15);
+    } else {
+      setStreak(0);
+    }
   }
 
   function nextCard() {
@@ -993,27 +1234,31 @@ function SkillPracticePage() {
 
     switch (card.type) {
       case "code-review":
+      case "ai-audit":
         return (
           <CodeReviewCardComponent
-            card={card}
+            card={card as CodeReviewCard | AiAuditCard}
             approveOpacity={approveOpacity}
             rejectOpacity={rejectOpacity}
             onExplainConcept={handleExplain}
           />
         );
       case "concept":
+      case "system-decision":
         return (
           <ConceptCardComponent
-            card={card}
+            card={card as ConceptCard}
             selectedOption={selectedOption}
             onSelect={resolveOption}
             onExplainConcept={handleExplain}
           />
         );
       case "predict-output":
+      case "race-condition":
+      case "perf-trap":
         return (
           <PredictOutputCardComponent
-            card={card}
+            card={card as PredictOutputCard}
             selectedOption={selectedOption}
             onSelect={resolveOption}
             onExplainConcept={handleExplain}
@@ -1028,6 +1273,15 @@ function SkillPracticePage() {
             onExplainConcept={handleExplain}
           />
         );
+      case "explain-back":
+        return (
+          <ExplainBackCardComponent
+            card={card}
+            answered={selectedOption !== null}
+            onSubmit={resolveExplainBack}
+            onExplainConcept={handleExplain}
+          />
+        );
     }
   }
 
@@ -1035,8 +1289,13 @@ function SkillPracticePage() {
   function renderFeedbackExtra() {
     if (!feedback) return null;
     const fb = feedback;
-    if (fb.card.type === "code-review") return null;
-    const mcqCard = fb.card as ConceptCard | PredictOutputCard | FillBlankCard;
+    if (
+      fb.card.type === "code-review" ||
+      fb.card.type === "ai-audit" ||
+      fb.card.type === "explain-back"
+    )
+      return null;
+    const mcqCard = fb.card as ConceptCard | SystemDecisionCard;
     return (
       <div className="mt-3 space-y-2">
         {fb.selectedOption !== undefined && fb.selectedOption !== mcqCard.correctIndex && (
@@ -1045,7 +1304,8 @@ function SkillPracticePage() {
           </div>
         )}
         <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 text-[12px] text-emerald-300/80">
-          <span className="font-semibold">Correct answer:</span> {mcqCard.options[mcqCard.correctIndex]}
+          <span className="font-semibold">Correct answer:</span>{" "}
+          {mcqCard.options[mcqCard.correctIndex]}
         </div>
       </div>
     );
@@ -1152,7 +1412,7 @@ function SkillPracticePage() {
                     ? {
                         drag: "x" as const,
                         dragConstraints: { left: 0, right: 0 },
-                        onDragEnd: (_: any, info: any) => {
+                        onDragEnd: (_: unknown, info: import("framer-motion").PanInfo) => {
                           if (info.offset.x < -100) resolveSwipe("left");
                           else if (info.offset.x > 100) resolveSwipe("right");
                         },
@@ -1243,7 +1503,11 @@ function SkillPracticePage() {
           onSelectOption={resolveOption}
           active={!feedback && !explainConceptOpen}
           cardType={card.type}
-          optionCount={card.type !== "code-review" ? (card as any).options?.length ?? 4 : 0}
+          optionCount={
+            card.type !== "code-review" && card.type !== "ai-audit" && card.type !== "explain-back"
+              ? ((card as ConceptCard).options?.length ?? 4)
+              : 0
+          }
         />
       </main>
 
@@ -1257,7 +1521,8 @@ function SkillPracticePage() {
           </DialogHeader>
           <div className="space-y-4 py-2 text-sm leading-relaxed text-white/70">
             <p>
-              {CONCEPT_EXPLANATIONS[card.concept] || `This is an explanation for ${card.concept}. In a full implementation, this would be generated by AI or fetched from the backend.`}
+              {CONCEPT_EXPLANATIONS[card.concept] ||
+                `This is an explanation for ${card.concept}. In a full implementation, this would be generated by AI or fetched from the backend.`}
             </p>
           </div>
         </DialogContent>

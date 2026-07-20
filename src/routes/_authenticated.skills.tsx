@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
-export const Route = createFileRoute("/skills")({
+export const Route = createFileRoute("/_authenticated/skills")({
   head: () => ({
     meta: [
       { title: "Skills — MeisterUp" },
@@ -576,47 +576,6 @@ function StatBar({ skills }: { skills: Skill[] }) {
 }
 
 /* ────────────────────────────────────────────────────────────── */
-/*  NAV                                                            */
-/* ────────────────────────────────────────────────────────────── */
-
-function SkillsNav() {
-  const { user } = useAuth();
-  const name = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Developer";
-  const initial = name.charAt(0).toUpperCase();
-
-  return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-1.5 text-[13px] text-white/50 transition hover:text-white"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Dashboard
-          </Link>
-          <div className="h-4 w-px bg-white/10" />
-          <Link to="/" className="group flex items-center gap-2">
-            <img src="/favicon.ico" alt="MeisterUp Logo" className="h-5 w-5 object-contain" />
-            <span className="text-[14px] font-semibold tracking-tight text-white">MeisterUp</span>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[13px] text-white/60 md:flex">
-            <Star className="h-3.5 w-3.5 text-amber-400" />
-            <span>Skills Library</span>
-          </div>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-fuchsia-400 text-[11px] font-bold text-white uppercase">
-            {initial}
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────── */
 /*  MAIN PAGE                                                       */
 /* ────────────────────────────────────────────────────────────── */
 
@@ -675,9 +634,7 @@ function SkillsPage() {
         className="pointer-events-none fixed left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-indigo-500 opacity-[0.08] blur-[120px]"
       />
 
-      <SkillsNav />
-
-      <main className="mx-auto max-w-7xl px-6 pb-24 pt-24">
+      <main className="mx-auto max-w-7xl px-6 pb-24 pt-10">
         {/* Page header */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

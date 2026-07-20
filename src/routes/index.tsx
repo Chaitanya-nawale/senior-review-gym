@@ -591,7 +591,7 @@ function AssessmentDemo() {
   useEffect(() => {
     const id = setInterval(() => setStep((s) => (s + 1) % steps.length), 3800);
     return () => clearInterval(id);
-  }, []);
+  }, [steps.length]);
   const mastery = [22, 41, 43, 68][step];
 
   return (
@@ -1000,8 +1000,8 @@ function ReviewCard({
   rejectOpacity,
 }: {
   card: (typeof SWIPE_CARDS)[number];
-  approveOpacity: any;
-  rejectOpacity: any;
+  approveOpacity: import("framer-motion").MotionValue<number>;
+  rejectOpacity: import("framer-motion").MotionValue<number>;
 }) {
   return (
     <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-[#0e0e12] to-black shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)]">
@@ -1084,7 +1084,7 @@ function StatCard({
   label,
   value,
 }: {
-  icon: any;
+  icon: import("react").ElementType;
   label: string;
   value: string | number;
 }) {
