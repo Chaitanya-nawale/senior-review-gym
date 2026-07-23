@@ -1,8 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Medal, Flame, TrendingUp, ShieldCheck, Search, Check } from "lucide-react";
+import {
+  Trophy,
+  Medal,
+  Flame,
+  ShieldCheck,
+  Search,
+  Check,
+  Loader2,
+} from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { cn } from "../lib/utils";
+import { useLeaderboard } from "../hooks/useDashboard";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
@@ -14,26 +24,19 @@ export const Route = createFileRoute("/_authenticated/leaderboard")({
   component: LeaderboardPage,
 });
 
-function cn(...classes: (string | false | undefined | null)[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
-// MOCK DATA for now
-const LEADERBOARD_DATA = Array.from({ length: 50 }, (_, i) => ({
-  id: `usr-${i}`,
-  rank: i + 1,
-  name: i === 7 ? "You" : `Engineer ${i + 1}`,
-  avatar: `https://i.pravatar.cc/150?u=${i}`,
-  xp: 15000 - i * 150 - Math.floor(Math.random() * 50),
-  streak: Math.max(0, 30 - i - Math.floor(Math.random() * 5)),
-  isCurrentUser: i === 7,
-}));
-
 function LeaderboardPage() {
   const { user } = useAuth();
   const [optedIn, setOptedIn] = useState(true);
+  const [search, setSearch] = useState("");
 
-  const currentUserData = LEADERBOARD_DATA.find((u) => u.isCurrentUser);
+  const { data: allRows, isLoading } = useLeaderboard(100);
+
+  const rows = (allRows ?? []).filter((r) =>
+    !search ||
+    (r.display_name ?? "").toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const currentUserRow = (allRows ?? []).find((r) => r.user_id === user?.id);
 
   return (
     <div className="mx-auto max-w-5xl px-6 pb-24 pt-10">
@@ -105,6 +108,8 @@ function LeaderboardPage() {
               <Search className="h-4 w-4 text-white/40" />
               <input
                 type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search engineers..."
                 className="flex-1 bg-transparent text-[14px] text-white placeholder:text-white/30 focus:outline-none"
               />
@@ -118,69 +123,117 @@ function LeaderboardPage() {
                 <div className="text-right">XP</div>
               </div>
 
-              {LEADERBOARD_DATA.map((row, i) => (
-                <motion.div
-                  key={row.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: i * 0.02 }}
-                  className={cn(
-                    "grid grid-cols-[60px_1fr_100px_100px] items-center px-6 py-4 transition hover:bg-white/[0.02]",
-                    row.isCurrentUser && "bg-indigo-500/[0.08] hover:bg-indigo-500/[0.12]",
-                  )}
-                >
-                  <div className="text-center">
-                    {row.rank === 1 ? (
-                      <Medal className="mx-auto h-5 w-5 text-yellow-400" />
-                    ) : row.rank === 2 ? (
-                      <Medal className="mx-auto h-5 w-5 text-gray-300" />
-                    ) : row.rank === 3 ? (
-                      <Medal className="mx-auto h-5 w-5 text-amber-700" />
-                    ) : (
-                      <span className="text-[14px] font-semibold text-white/40">{row.rank}</span>
+              {isLoading && (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+                </div>
+              )}
+
+              {!isLoading && rows.length === 0 && (
+                <div className="py-16 text-center text-[14px] text-white/30">
+                  {search ? "No engineers found." : "No data yet — be the first on the board!"}
+                </div>
+              )}
+
+              {!isLoading && rows.map((row, i) => {
+                const isCurrentUser = row.user_id === user?.id;
+                const rank = row.rank ?? i + 1;
+                return (
+                  <motion.div
+                    key={row.user_id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: i * 0.01 }}
+                    className={cn(
+                      "grid grid-cols-[60px_1fr_100px_100px] items-center px-6 py-4 transition hover:bg-white/[0.02]",
+                      isCurrentUser && "bg-indigo-500/[0.08] hover:bg-indigo-500/[0.12]",
                     )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <img src={row.avatar} alt="" className="h-8 w-8 rounded-full bg-white/10" />
-                    <span
-                      className={cn(
-                        "text-[14px] font-medium",
-                        row.isCurrentUser ? "text-indigo-300" : "text-white",
+                  >
+                    <div className="text-center">
+                      {rank === 1 ? (
+                        <Medal className="mx-auto h-5 w-5 text-yellow-400" />
+                      ) : rank === 2 ? (
+                        <Medal className="mx-auto h-5 w-5 text-gray-300" />
+                      ) : rank === 3 ? (
+                        <Medal className="mx-auto h-5 w-5 text-amber-700" />
+                      ) : (
+                        <span className="text-[14px] font-semibold text-white/40">{rank}</span>
                       )}
-                    >
-                      {row.name}
-                    </span>
-                  </div>
-                  <div className="hidden sm:flex items-center justify-end gap-1.5">
-                    <Flame
-                      className={cn(
-                        "h-3.5 w-3.5",
-                        row.streak > 3 ? "text-amber-400" : "text-white/20",
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {row.avatar_url ? (
+                        <img
+                          src={row.avatar_url}
+                          alt=""
+                          className="h-8 w-8 rounded-full bg-white/10 object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 text-[13px] font-semibold text-indigo-300">
+                          {(row.display_name ?? "?").charAt(0).toUpperCase()}
+                        </div>
                       )}
-                    />
-                    <span className="text-[14px] font-medium text-white/80">{row.streak}</span>
-                  </div>
-                  <div className="text-right text-[14px] font-semibold text-white">
-                    {row.xp.toLocaleString()}
-                  </div>
-                </motion.div>
-              ))}
+                      <span
+                        className={cn(
+                          "text-[14px] font-medium",
+                          isCurrentUser ? "text-indigo-300" : "text-white",
+                        )}
+                      >
+                        {row.display_name ?? "Anonymous"}
+                        {isCurrentUser && (
+                          <span className="ml-2 text-[11px] text-indigo-400/70">(you)</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="hidden sm:flex items-center justify-end gap-1.5">
+                      <Flame
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          (row.current_streak ?? 0) > 3 ? "text-amber-400" : "text-white/20",
+                        )}
+                      />
+                      <span className="text-[14px] font-medium text-white/80">
+                        {row.current_streak ?? 0}
+                      </span>
+                    </div>
+                    <div className="text-right text-[14px] font-semibold text-white">
+                      {(row.weekly_xp ?? 0).toLocaleString()}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
 
           <div className="space-y-6">
-            {currentUserData && (
+            {currentUserRow ? (
               <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-500/[0.05] to-fuchsia-500/[0.05] p-6">
                 <div className="text-[12px] font-medium text-white/50">Your Current Rank</div>
                 <div className="mt-2 text-4xl font-semibold tracking-tight text-white">
-                  #{currentUserData.rank}
+                  #{currentUserRow.rank ?? "—"}
                 </div>
-                <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
-                  <div className="text-[12px] text-white/50">Points to Next Rank</div>
-                  <div className="text-[13px] font-semibold text-indigo-400">120 XP</div>
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+                  <div>
+                    <div className="text-[11px] text-white/40">Weekly XP</div>
+                    <div className="mt-1 text-[16px] font-semibold text-indigo-300">
+                      {(currentUserRow.weekly_xp ?? 0).toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-white/40">Streak</div>
+                    <div className="mt-1 text-[16px] font-semibold text-amber-300">
+                      {currentUserRow.current_streak ?? 0}d
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
+            ) : !isLoading ? (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center">
+                <Trophy className="mx-auto h-8 w-8 text-white/20" />
+                <p className="mt-3 text-[13px] text-white/40">
+                  Complete a session to appear on the leaderboard.
+                </p>
+              </div>
+            ) : null}
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
               <h3 className="text-[14px] font-medium text-white">How it works</h3>

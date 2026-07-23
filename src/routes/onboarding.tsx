@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../lib/auth";
 import { ArrowRight, Loader2, Code2, Brain, Sparkles, Layers } from "lucide-react";
+import { updateUserProfile } from "../lib/api";
+import { supabase } from "../lib/supabase";
+import { toast } from "sonner";
+import type { UserRole, ExperienceBand } from "../lib/types";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -15,16 +19,16 @@ function cn(...classes: (string | false | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-const ROLES = [
-  "Frontend Engineer",
-  "Backend Engineer",
-  "Fullstack Engineer",
-  "DevOps / SRE",
-  "Data / ML Engineer",
-  "Tech Lead / Manager",
+const ROLES: { label: string; value: UserRole }[] = [
+  { label: "Frontend Engineer", value: "frontend" },
+  { label: "Backend Engineer", value: "backend" },
+  { label: "Fullstack Engineer", value: "fullstack" },
+  { label: "DevOps / SRE", value: "devops" },
+  { label: "Data / ML Engineer", value: "data" },
+  { label: "Tech Lead / Manager", value: "tech_lead" },
 ];
 
-const EXP_BANDS = [
+const EXP_BANDS: { id: ExperienceBand; label: string; desc: string }[] = [
   { id: "0-2y", label: "0–2 years", desc: "Just starting out" },
   { id: "2-5y", label: "2–5 years", desc: "Building core expertise" },
   { id: "5-10y", label: "5–10 years", desc: "Architecting systems" },
@@ -36,8 +40,8 @@ function OnboardingPage() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
-  const [role, setRole] = useState("");
-  const [exp, setExp] = useState("");
+  const [role, setRole] = useState<UserRole | "">("");
+  const [exp, setExp] = useState<ExperienceBand | "">("");
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -46,12 +50,27 @@ function OnboardingPage() {
     }
   }, [user, loading, navigate]);
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (!user || !role || !exp) return;
     setGenerating(true);
-    // Simulate API call to generate curriculum and save profile
-    setTimeout(() => {
+    try {
+      // 1. Save profile with role and experience
+      await updateUserProfile(user.id, {
+        role: role as UserRole,
+        experience_band: exp as ExperienceBand,
+        onboarding_completed_at: new Date().toISOString(),
+      });
+      // 2. Seed initial streak row
+      await supabase.from("user_streaks").upsert(
+        { user_id: user.id, current_streak: 0, longest_streak: 0 },
+        { onConflict: "user_id", ignoreDuplicates: true },
+      );
       navigate({ to: "/dashboard" });
-    }, 2000);
+    } catch (err) {
+      console.error("Onboarding save failed:", err);
+      toast.error("Failed to save your profile. Please try again.");
+      setGenerating(false);
+    }
   };
 
   if (loading || !user) {
@@ -118,23 +137,23 @@ function OnboardingPage() {
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
                   {ROLES.map((r) => (
                     <button
-                      key={r}
-                      onClick={() => setRole(r)}
+                      key={r.value}
+                      onClick={() => setRole(r.value)}
                       className={cn(
                         "flex items-center justify-between rounded-xl border p-4 text-left transition",
-                        role === r
+                        role === r.value
                           ? "border-indigo-500 bg-indigo-500/10"
                           : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]",
                       )}
                     >
-                      <span className="text-[14px] font-medium text-white">{r}</span>
+                      <span className="text-[14px] font-medium text-white">{r.label}</span>
                       <div
                         className={cn(
                           "flex h-5 w-5 items-center justify-center rounded-full border",
-                          role === r ? "border-indigo-500" : "border-white/20",
+                          role === r.value ? "border-indigo-500" : "border-white/20",
                         )}
                       >
-                        {role === r && <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />}
+                        {role === r.value && <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />}
                       </div>
                     </button>
                   ))}

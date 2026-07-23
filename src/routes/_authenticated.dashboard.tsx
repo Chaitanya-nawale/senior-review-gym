@@ -27,6 +27,9 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { cn } from "../lib/utils";
+import { useDashboardStats, useContinueLearning } from "../hooks/useDashboard";
+import { useStreak } from "../hooks/useStreak";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -43,22 +46,21 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 /* ────────────────────────────────────────────────────────────── */
-/*  HELPERS                                                        */
-/* ────────────────────────────────────────────────────────────── */
-
-function cn(...c: (string | false | undefined | null)[]) {
-  return c.filter(Boolean).join(" ");
-}
-
-/* ────────────────────────────────────────────────────────────── */
 /*  GREETING / HEADER                                              */
 /* ────────────────────────────────────────────────────────────── */
 
 function Greeting() {
   const { user } = useAuth();
+  const { data: streakData } = useStreak();
+  const currentStreak = streakData?.current_streak ?? 0;
   const name = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Developer";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const streakMsg = currentStreak > 1
+    ? `You've been on a ${currentStreak}-day streak. Keep building momentum.`
+    : currentStreak === 1
+    ? "You started a streak today. Come back tomorrow to keep it going!"
+    : "Start practicing today to begin your streak.";
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -69,7 +71,7 @@ function Greeting() {
         {greeting}, {name}.
       </h1>
       <p className="mt-1.5 text-[15px] text-white/50">
-        You've been on a 7-day streak. Keep building momentum.
+        {streakMsg}
       </p>
     </motion.div>
   );
@@ -80,32 +82,34 @@ function Greeting() {
 /* ────────────────────────────────────────────────────────────── */
 
 function StatsRow() {
-  const stats = [
+  const { data: stats, isLoading } = useDashboardStats();
+
+  const statDefs = [
     {
       icon: Flame,
       label: "Streak",
-      value: "7",
-      sub: "days",
+      value: isLoading ? "—" : `${stats?.streak ?? 0}`,
+      sub: stats?.streak === 1 ? "day" : "days",
       color: "text-amber-400",
     },
     {
       icon: Zap,
       label: "Total XP",
-      value: "2,480",
-      sub: "+145 this week",
+      value: isLoading ? "—" : (stats?.totalXP ?? 0).toLocaleString(),
+      sub: stats ? `+${stats.weeklyXP.toLocaleString()} this week` : "loading...",
       color: "text-indigo-400",
     },
     {
       icon: TrendingUp,
       label: "Mastery",
-      value: "72%",
-      sub: "+4% vs. last week",
+      value: isLoading ? "—" : `${stats?.masteryPct ?? 0}%`,
+      sub: stats?.masteryDelta ? `+${stats.masteryDelta}% vs. last week` : "across all skills",
       color: "text-emerald-400",
     },
     {
       icon: Target,
       label: "Concepts",
-      value: "41 / 68",
+      value: isLoading ? "—" : `${stats?.conceptsMastered ?? 0} / ${stats?.totalConcepts ?? 0}`,
       sub: "mastered",
       color: "text-fuchsia-400",
     },
@@ -113,7 +117,7 @@ function StatsRow() {
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((s, i) => (
+      {statDefs.map((s, i) => (
         <motion.div
           key={s.label}
           initial={{ opacity: 0, y: 12 }}
@@ -139,37 +143,14 @@ function StatsRow() {
 /*  CONTINUE LEARNING / RECOMMENDED                                */
 /* ────────────────────────────────────────────────────────────── */
 
-const CONTINUE_CARDS = [
-  {
-    skill: "Python",
-    concept: "Context Managers",
-    reason: "Prereq mastered",
-    est: "5 min",
-    progress: 72,
-    tone: "from-yellow-400/20 to-yellow-600/5",
-    icon: Terminal,
-  },
-  {
-    skill: "TypeScript",
-    concept: "Discriminated Unions",
-    reason: "Weakness detected",
-    est: "8 min",
-    progress: 38,
-    tone: "from-blue-400/20 to-blue-600/5",
-    icon: Cpu,
-  },
-  {
-    skill: "System Design",
-    concept: "Rate Limiting Strategies",
-    reason: "New concept unlocked",
-    est: "12 min",
-    progress: 0,
-    tone: "from-fuchsia-400/20 to-fuchsia-600/5",
-    icon: Layers,
-  },
-];
+
 
 function ContinueLearning() {
+  const { data: continueItems, isLoading } = useContinueLearning(3);
+
+  // Fallback empty state
+  const isEmpty = !isLoading && (!continueItems || continueItems.length === 0);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -187,27 +168,43 @@ function ContinueLearning() {
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
-        {CONTINUE_CARDS.map((c) => (
-          <div
-            key={c.concept}
-            className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-5 transition hover:border-white/20"
+        {isLoading && (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-28 animate-pulse rounded-xl border border-white/10 bg-white/[0.02]" />
+          ))
+        )}
+        {isEmpty && (
+          <div className="col-span-3 py-8 text-center text-[14px] text-white/30">
+            <BookOpen className="mx-auto mb-3 h-8 w-8 opacity-40" />
+            <p>Start a skill to see recommendations here.</p>
+            <Link to="/skills" className="mt-2 inline-block text-indigo-400 hover:text-indigo-300 transition-colors">
+              Browse skills →
+            </Link>
+          </div>
+        )}
+        {!isLoading && (continueItems ?? []).map((c) => (
+          <Link
+            key={c.concept_slug}
+            to="/skills/$skillId"
+            params={{ skillId: c.skill_slug }}
+            className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-5 transition hover:border-white/20 block"
           >
             <div
               className={cn(
                 "absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100",
-                c.tone,
+                c.color_from,
+                c.color_to,
               )}
             />
-
             <div className="relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
-                    <c.icon className="h-4 w-4 text-white/70" />
+                    <Zap className="h-4 w-4 text-white/70" />
                   </div>
                   <div>
-                    <div className="text-[11px] text-white/40">{c.skill}</div>
-                    <div className="text-[14px] font-semibold text-white">{c.concept}</div>
+                    <div className="text-[11px] text-white/40">{c.skill_name}</div>
+                    <div className="text-[14px] font-semibold text-white">{c.concept_name}</div>
                   </div>
                 </div>
                 <ArrowUpRight className="h-4 w-4 text-white/20 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white/60" />
@@ -218,7 +215,7 @@ function ContinueLearning() {
                   <Brain className="h-3 w-3" /> {c.reason}
                 </span>
                 <span className="flex items-center gap-1 font-mono">
-                  <Clock className="h-3 w-3" /> {c.est}
+                  <Clock className="h-3 w-3" /> {c.estimatedMinutes}m
                 </span>
               </div>
 
@@ -231,7 +228,7 @@ function ContinueLearning() {
                 />
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </motion.div>
@@ -241,6 +238,7 @@ function ContinueLearning() {
 /* ────────────────────────────────────────────────────────────── */
 /*  MASTERY CHART                                                  */
 /* ────────────────────────────────────────────────────────────── */
+
 
 function MasteryChart() {
   const pts = useMemo(() => {

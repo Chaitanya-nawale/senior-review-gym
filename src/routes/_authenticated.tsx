@@ -13,6 +13,7 @@ import {
   Snowflake,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { useStreak } from "../hooks/useStreak";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -27,6 +28,9 @@ function DashboardNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
+  const { data: streakData } = useStreak();
+  const currentStreak = streakData?.current_streak ?? 0;
+  const streakFreezes = streakData?.streak_freezes_available ?? 0;
 
   const name = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Developer";
   const initial = name.charAt(0).toUpperCase();
@@ -54,18 +58,24 @@ function DashboardNav() {
         </div>
 
         <nav className="hidden items-center gap-6 md:flex">
-          <Link to="/dashboard" className="text-[13px] font-medium text-white transition-colors">
+          <Link
+            to="/dashboard"
+            className="text-[13px] font-medium text-white/50 transition-colors hover:text-white"
+            activeProps={{ className: "text-[13px] font-medium text-white transition-colors" }}
+          >
             Dashboard
           </Link>
           <Link
             to="/skills"
             className="text-[13px] font-medium text-white/50 transition-colors hover:text-white"
+            activeProps={{ className: "text-[13px] font-medium text-white transition-colors" }}
           >
             Skills
           </Link>
           <Link
             to="/leaderboard"
             className="text-[13px] font-medium text-white/50 transition-colors hover:text-white"
+            activeProps={{ className: "text-[13px] font-medium text-white transition-colors" }}
           >
             Leaderboard
           </Link>
@@ -73,19 +83,23 @@ function DashboardNav() {
 
         <div className="flex items-center gap-3">
           {/* Streak Indicator */}
-          <div className="hidden sm:flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/10 px-2.5 py-1.5 text-[13px] font-medium text-orange-400">
-            <Flame className="h-4 w-4" />
-            <span>7</span>
-          </div>
+          {currentStreak > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/10 px-2.5 py-1.5 text-[13px] font-medium text-orange-400">
+              <Flame className="h-4 w-4" />
+              <span>{currentStreak}</span>
+            </div>
+          )}
 
           {/* Streak Freeze Indicator */}
-          <div
-            className="hidden sm:flex items-center gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-[13px] font-medium text-sky-400"
-            title="Streak Freeze Active"
-          >
-            <Snowflake className="h-4 w-4" />
-            <span>1</span>
-          </div>
+          {streakFreezes > 0 && (
+            <div
+              className="hidden sm:flex items-center gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-[13px] font-medium text-sky-400"
+              title={`${streakFreezes} streak freeze${streakFreezes !== 1 ? 's' : ''} available`}
+            >
+              <Snowflake className="h-4 w-4" />
+              <span>{streakFreezes}</span>
+            </div>
+          )}
 
           <button
             className="relative rounded-lg border border-white/10 bg-white/[0.03] p-2 text-white/50 transition hover:bg-white/[0.06] hover:text-white"

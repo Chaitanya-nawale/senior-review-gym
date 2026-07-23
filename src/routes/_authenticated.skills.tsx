@@ -22,8 +22,13 @@ import {
   Terminal,
   TrendingUp,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { cn } from "../lib/utils";
+import { usePublishedSkills } from "../hooks/useSkills";
+import { useUserSkillProgress } from "../hooks/useSkills";
+import type { Skill as DBSkill, UserSkillProgress } from "../lib/types";
 
 export const Route = createFileRoute("/_authenticated/skills")({
   head: () => ({
@@ -40,310 +45,95 @@ export const Route = createFileRoute("/_authenticated/skills")({
 });
 
 /* ────────────────────────────────────────────────────────────── */
-/*  HELPERS                                                        */
-/* ────────────────────────────────────────────────────────────── */
-
-function cn(...c: (string | false | undefined | null)[]) {
-  return c.filter(Boolean).join(" ");
-}
-
-/* ────────────────────────────────────────────────────────────── */
-/*  DATA                                                           */
+/*  TYPES (view-model, not DB types)                               */
 /* ────────────────────────────────────────────────────────────── */
 
 type SkillStatus = "active" | "completed" | "locked" | "new";
 
-interface Skill {
+interface SkillViewModel {
+  id: string;
   name: string;
+  slug: string;
   category: string;
   learners: string;
   tone: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   mastery: number;
   concepts: number;
   totalConcepts: number;
   xp: number;
   status: SkillStatus;
-  streak?: number;
   estimatedHours: number;
 }
 
-const SKILLS: Skill[] = [
-  {
-    name: "Python",
-    category: "Languages",
-    learners: "48k",
-    tone: "from-yellow-400/25 to-yellow-600/5",
-    icon: Terminal,
-    mastery: 72,
-    concepts: 41,
-    totalConcepts: 68,
-    xp: 1840,
-    status: "active",
-    streak: 7,
-    estimatedHours: 12,
-  },
-  {
-    name: "TypeScript",
-    category: "Languages",
-    learners: "61k",
-    tone: "from-blue-400/25 to-blue-600/5",
-    icon: Cpu,
-    mastery: 38,
-    concepts: 24,
-    totalConcepts: 71,
-    xp: 640,
-    status: "active",
-    estimatedHours: 22,
-  },
-  {
-    name: "System Design",
-    category: "Architecture",
-    learners: "29k",
-    tone: "from-fuchsia-400/25 to-fuchsia-600/5",
-    icon: Layers,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 55,
-    xp: 0,
-    status: "new",
-    estimatedHours: 30,
-  },
-  {
-    name: "React",
-    category: "Frameworks",
-    learners: "54k",
-    tone: "from-sky-400/25 to-sky-600/5",
-    icon: Zap,
-    mastery: 61,
-    concepts: 33,
-    totalConcepts: 59,
-    xp: 1240,
-    status: "active",
-    estimatedHours: 15,
-  },
-  {
-    name: "SQL",
-    category: "Databases",
-    learners: "37k",
-    tone: "from-indigo-400/25 to-indigo-600/5",
-    icon: BookOpen,
-    mastery: 85,
-    concepts: 47,
-    totalConcepts: 52,
-    xp: 2100,
-    status: "completed",
-    estimatedHours: 5,
-  },
-  {
-    name: "Rust",
-    category: "Languages",
-    learners: "12k",
-    tone: "from-orange-400/25 to-orange-600/5",
-    icon: Flame,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 80,
-    xp: 0,
-    status: "locked",
-    estimatedHours: 45,
-  },
-  {
-    name: "Go",
-    category: "Languages",
-    learners: "19k",
-    tone: "from-cyan-300/25 to-cyan-500/5",
-    icon: Play,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 64,
-    xp: 0,
-    status: "new",
-    estimatedHours: 28,
-  },
-  {
-    name: "Machine Learning",
-    category: "AI & ML",
-    learners: "27k",
-    tone: "from-emerald-400/25 to-emerald-600/5",
-    icon: Brain,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 90,
-    xp: 0,
-    status: "locked",
-    estimatedHours: 60,
-  },
-  {
-    name: "Kubernetes",
-    category: "DevOps",
-    learners: "16k",
-    tone: "from-blue-300/25 to-blue-500/5",
-    icon: Layers,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 58,
-    xp: 0,
-    status: "new",
-    estimatedHours: 35,
-  },
-  {
-    name: "Docker",
-    category: "DevOps",
-    learners: "22k",
-    tone: "from-sky-300/25 to-sky-500/5",
-    icon: Cpu,
-    mastery: 52,
-    concepts: 22,
-    totalConcepts: 44,
-    xp: 780,
-    status: "active",
-    estimatedHours: 10,
-  },
-  {
-    name: "AWS",
-    category: "Cloud",
-    learners: "31k",
-    tone: "from-amber-400/25 to-amber-600/5",
-    icon: Zap,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 95,
-    xp: 0,
-    status: "new",
-    estimatedHours: 50,
-  },
-  {
-    name: "Prompt Engineering",
-    category: "AI & ML",
-    learners: "44k",
-    tone: "from-violet-400/25 to-violet-600/5",
-    icon: Sparkles,
-    mastery: 88,
-    concepts: 29,
-    totalConcepts: 33,
-    xp: 1680,
-    status: "completed",
-    estimatedHours: 3,
-  },
-  {
-    name: "Git",
-    category: "Tools",
-    learners: "39k",
-    tone: "from-red-400/25 to-red-600/5",
-    icon: GitBranch,
-    mastery: 90,
-    concepts: 38,
-    totalConcepts: 42,
-    xp: 1920,
-    status: "completed",
-    estimatedHours: 2,
-  },
-  {
-    name: "Data Structures",
-    category: "CS Fundamentals",
-    learners: "42k",
-    tone: "from-pink-400/25 to-pink-600/5",
-    icon: TrendingUp,
-    mastery: 45,
-    concepts: 21,
-    totalConcepts: 48,
-    xp: 820,
-    status: "active",
-    estimatedHours: 18,
-  },
-  {
-    name: "Cybersecurity",
-    category: "Security",
-    learners: "18k",
-    tone: "from-rose-400/25 to-rose-600/5",
-    icon: Lock,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 76,
-    xp: 0,
-    status: "locked",
-    estimatedHours: 40,
-  },
-  {
-    name: "AI Engineering",
-    category: "AI & ML",
-    learners: "33k",
-    tone: "from-purple-400/25 to-purple-600/5",
-    icon: Brain,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 62,
-    xp: 0,
-    status: "new",
-    estimatedHours: 32,
-  },
-  {
-    name: "Linux",
-    category: "Tools",
-    learners: "24k",
-    tone: "from-zinc-300/25 to-zinc-500/5",
-    icon: Terminal,
-    mastery: 70,
-    concepts: 35,
-    totalConcepts: 50,
-    xp: 1360,
-    status: "active",
-    estimatedHours: 8,
-  },
-  {
-    name: "DevOps",
-    category: "DevOps",
-    learners: "21k",
-    tone: "from-lime-400/25 to-lime-600/5",
-    icon: GitBranch,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 72,
-    xp: 0,
-    status: "new",
-    estimatedHours: 38,
-  },
-  {
-    name: "Networking",
-    category: "CS Fundamentals",
-    learners: "14k",
-    tone: "from-teal-400/25 to-teal-600/5",
-    icon: Layers,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 54,
-    xp: 0,
-    status: "locked",
-    estimatedHours: 25,
-  },
-  {
-    name: "Statistics",
-    category: "CS Fundamentals",
-    learners: "11k",
-    tone: "from-green-400/25 to-green-600/5",
-    icon: TrendingUp,
-    mastery: 0,
-    concepts: 0,
-    totalConcepts: 46,
-    xp: 0,
-    status: "locked",
-    estimatedHours: 20,
-  },
-];
+/* ── Icon name → Lucide component ── */
+const ICON_MAP: Record<string, LucideIcon> = {
+  Terminal,
+  Cpu,
+  Layers,
+  Zap,
+  GitBranch,
+  Brain,
+  Sparkles,
+  Lock,
+  BookOpen,
+  TrendingUp,
+  Play,
+  Star,
+};
+
+function resolveIcon(iconName: string | null): LucideIcon {
+  if (!iconName) return Terminal;
+  return ICON_MAP[iconName] ?? Terminal;
+}
+
+/* ── Merge DB skill + user progress into a view-model ── */
+function toViewModel(
+  skill: DBSkill,
+  progress: UserSkillProgress | undefined,
+): SkillViewModel {
+  const mastery = progress ? Math.round(progress.mastery_pct) : 0;
+  const status: SkillStatus = progress
+    ? mastery >= 80
+      ? "completed"
+      : "active"
+    : "new";
+
+  const learners =
+    skill.learner_count >= 1000
+      ? `${Math.round(skill.learner_count / 1000)}k`
+      : String(skill.learner_count);
+
+  return {
+    id: skill.id,
+    name: skill.name,
+    slug: skill.slug,
+    category: skill.category,
+    learners,
+    tone: `${skill.color_from ?? "from-indigo-400/20"} ${skill.color_to ?? "to-indigo-600/5"}`,
+    icon: resolveIcon(skill.icon_name),
+    mastery,
+    concepts: progress?.concepts_mastered ?? 0,
+    totalConcepts: skill.total_concepts,
+    xp: progress?.total_xp ?? 0,
+    status,
+    estimatedHours: skill.estimated_hours ?? 0,
+  };
+}
 
 const CATEGORIES = [
+
   "All",
   "Languages",
   "Frameworks",
   "Architecture",
-  "Databases",
-  "DevOps",
+  "Infrastructure",
   "Cloud",
-  "AI & ML",
+  "AI",
   "Security",
   "Tools",
-  "CS Fundamentals",
+  "Data",
+  "Foundations",
 ];
 
 /* ────────────────────────────────────────────────────────────── */
@@ -386,9 +176,9 @@ function StatusBadge({ status }: { status: SkillStatus }) {
 /*  SKILL CARD                                                      */
 /* ────────────────────────────────────────────────────────────── */
 
-function SkillCard({ skill, index }: { skill: Skill; index: number }) {
+function SkillCard({ skill, index }: { skill: SkillViewModel; index: number }) {
   const navigate = useNavigate();
-  const isLocked = skill.status === "locked";
+  const isLocked = false; // DB skills are never locked; all are browsable
   const isCompleted = skill.status === "completed";
   const hasProgress = skill.mastery > 0;
 
@@ -408,12 +198,10 @@ function SkillCard({ skill, index }: { skill: Skill; index: number }) {
           : "border-white/10 hover:border-white/20 hover:bg-white/[0.04] cursor-pointer",
       )}
       onClick={() => {
-        if (!isLocked) {
-          navigate({
-            to: "/skills/$skillId",
-            params: { skillId: skill.name.toLowerCase().replace(/\s+/g, "-") },
-          });
-        }
+        navigate({
+          to: "/skills/$skillId",
+          params: { skillId: skill.slug },
+        });
       }}
     >
       {/* Gradient overlay on hover */}
@@ -449,12 +237,6 @@ function SkillCard({ skill, index }: { skill: Skill; index: number }) {
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <StatusBadge status={skill.status} />
-            {skill.streak && skill.streak > 0 && (
-              <div className="flex items-center gap-1 text-[10px] text-amber-400">
-                <Flame className="h-3 w-3" />
-                {skill.streak}d streak
-              </div>
-            )}
           </div>
         </div>
 
@@ -539,7 +321,7 @@ function SkillCard({ skill, index }: { skill: Skill; index: number }) {
 /*  STAT SUMMARY BAR                                               */
 /* ────────────────────────────────────────────────────────────── */
 
-function StatBar({ skills }: { skills: Skill[] }) {
+function StatBar({ skills }: { skills: SkillViewModel[] }) {
   const active = skills.filter((s) => s.status === "active").length;
   const completed = skills.filter((s) => s.status === "completed").length;
   const totalXP = skills.reduce((acc, s) => acc + s.xp, 0);
@@ -585,8 +367,30 @@ function SkillsPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeFilter, setActiveFilter] = useState<
-    "all" | "active" | "new" | "completed" | "locked"
+    "all" | "active" | "new" | "completed"
   >("all");
+
+  // Real data hooks
+  const { data: rawSkills, isLoading: skillsLoading } = usePublishedSkills();
+  const { data: progressList } = useUserSkillProgress();
+
+  // Build progress lookup: skill_id -> UserSkillProgress
+  const progressMap = useMemo(() => {
+    const m = new Map<string, UserSkillProgress>();
+    (progressList ?? []).forEach((p) => m.set(p.skill_id, p));
+    return m;
+  }, [progressList]);
+
+  // Merge skills + progress into view models
+  const allSkills = useMemo<SkillViewModel[]>(() => {
+    return (rawSkills ?? []).map((s) => toViewModel(s, progressMap.get(s.id)));
+  }, [rawSkills, progressMap]);
+
+  // Categories derived from actual DB data
+  const categories = useMemo(() => {
+    const cats = new Set(allSkills.map((s) => s.category));
+    return ["All", ...Array.from(cats).sort()];
+  }, [allSkills]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -594,8 +398,8 @@ function SkillsPage() {
     }
   }, [user, loading, navigate]);
 
-  const filteredSkills = useMemo(() => {
-    return SKILLS.filter((s) => {
+  const filteredSkills = useMemo<SkillViewModel[]>(() => {
+    return allSkills.filter((s) => {
       const matchesSearch =
         s.name.toLowerCase().includes(search.toLowerCase()) ||
         s.category.toLowerCase().includes(search.toLowerCase());
@@ -603,9 +407,9 @@ function SkillsPage() {
       const matchesStatus = activeFilter === "all" || s.status === activeFilter;
       return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [search, activeCategory, activeFilter]);
+  }, [allSkills, search, activeCategory, activeFilter]);
 
-  if (loading) {
+  if (loading || skillsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black font-sans text-white/50">
         <div className="flex flex-col items-center gap-3">
@@ -623,7 +427,6 @@ function SkillsPage() {
     { key: "active", label: "In Progress" },
     { key: "new", label: "New" },
     { key: "completed", label: "Completed" },
-    { key: "locked", label: "Locked" },
   ];
 
   return (
@@ -661,7 +464,7 @@ function SkillsPage() {
           transition={{ delay: 0.1 }}
           className="mb-8"
         >
-          <StatBar skills={SKILLS} />
+          <StatBar skills={allSkills} />
         </motion.div>
 
         {/* Search + Filter bar */}
@@ -711,7 +514,7 @@ function SkillsPage() {
           transition={{ delay: 0.22 }}
           className="mb-8 flex flex-wrap gap-2"
         >
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               id={`category-${cat.replace(/\s+/g, "-").toLowerCase()}`}
@@ -733,7 +536,7 @@ function SkillsPage() {
           {filteredSkills.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredSkills.map((skill, i) => (
-                <SkillCard key={skill.name} skill={skill} index={i} />
+                <SkillCard key={skill.id} skill={skill} index={i} />
               ))}
             </div>
           ) : (

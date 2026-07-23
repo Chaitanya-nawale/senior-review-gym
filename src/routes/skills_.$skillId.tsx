@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
   ArrowLeft,
@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { startGymSession, recordAnswer, finishSession, type ActiveSession } from "../lib/session";
 
 export const Route = createFileRoute("/skills_/$skillId")({
   component: SkillPracticePage,
@@ -1110,6 +1111,28 @@ function SkillPracticePage() {
   const rawDeck = MOCK_SKILL_DATA[skillId] || FALLBACK_CARDS;
   const deck = useMemo(() => shuffle(rawDeck), [rawDeck]);
 
+  // Session recording ref (doesn't trigger re-renders)
+  const activeSessionRef = useRef<ActiveSession | null>(null);
+
+  // Start session on mount, finish on unmount
+  useEffect(() => {
+    if (!user) return;
+
+    // Best-effort: use skillId as the skill identifier.
+    // The DB lookup will fail gracefully if skill not seeded yet.
+    startGymSession(user.id, skillId).then((session) => {
+      activeSessionRef.current = session;
+    }).catch(console.error);
+
+    return () => {
+      if (activeSessionRef.current) {
+        finishSession(activeSessionRef.current).catch(console.error);
+        activeSessionRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, skillId]);
+
   // Swiping State
   const [i, setI] = useState(0);
   const [feedback, setFeedback] = useState<null | {
@@ -1172,6 +1195,15 @@ function SkillPracticePage() {
     } else {
       setStreak(0);
     }
+    // Record to Supabase (fire-and-forget)
+    if (activeSessionRef.current) {
+      recordAnswer(activeSessionRef.current, {
+        cardId: card.id,
+        conceptId: card.concept, // use concept name as fallback ID
+        isCorrect: correct,
+        swipeDirection: dir,
+      }).catch(console.error);
+    }
   }
 
   /* ── Resolve: MCQ option select ── */
@@ -1183,6 +1215,16 @@ function SkillPracticePage() {
     const correct = index === (card as ConceptCard | SystemDecisionCard).correctIndex;
     setPrevStreak(streak);
     setPrevXp(xp);
+
+    // Record to Supabase (fire-and-forget)
+    if (activeSessionRef.current) {
+      recordAnswer(activeSessionRef.current, {
+        cardId: card.id,
+        conceptId: card.concept,
+        isCorrect: correct,
+        answerIndex: index,
+      }).catch(console.error);
+    }
 
     // Delay feedback slightly to let the user see their selection highlight
     setTimeout(() => {
@@ -1209,6 +1251,15 @@ function SkillPracticePage() {
       setXp((v) => v + 15);
     } else {
       setStreak(0);
+    }
+    // Record to Supabase (fire-and-forget)
+    if (activeSessionRef.current) {
+      recordAnswer(activeSessionRef.current, {
+        cardId: card.id,
+        conceptId: card.concept,
+        isCorrect: correct,
+        userReasoning: text,
+      }).catch(console.error);
     }
   }
 
